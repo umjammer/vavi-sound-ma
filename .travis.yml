@@ -1,5 +1,0 @@
-language: go
-go:
-  - '1.12'
-script: |
-  GO111MODULE=on go test . ./sim/... ./ymf/...
