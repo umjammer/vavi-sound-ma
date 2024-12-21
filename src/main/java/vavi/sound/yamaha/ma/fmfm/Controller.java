@@ -14,10 +14,12 @@ import java.util.Map;
 import vavi.sound.yamaha.ma.sim.Registers;
 import vavi.sound.yamaha.ma.ymf.Register.ChRegister;
 import vavi.sound.yamaha.ma.ymf.Register.OpRegister;
-import vavi.sound.yamaha.smaf.voice.VM35FMOperator;
-import vavi.sound.yamaha.smaf.voice.VM35FMVoice;
-import vavi.sound.yamaha.smaf.voice.VM35VoicePC;
-import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
+import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35FMVoice;
+import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35FMVoiceVersion;
+import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35VoicePC;
+import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35FMOperator;
+import vavi.sound.yamaha.smaf.pb.smaf.pb.VM5VoiceLib;
+import vavi.sound.yamaha.smaf.pb.smaf.pb.VoiceType;
 
 import static vavi.sound.yamaha.ma.ymf.Register.ChRegister.ALG;
 import static vavi.sound.yamaha.ma.ymf.Register.ChRegister.BLOCK;
@@ -48,23 +50,30 @@ import static vavi.sound.yamaha.ma.ymf.Register.OpRegister.SR;
 import static vavi.sound.yamaha.ma.ymf.Register.OpRegister.TL;
 import static vavi.sound.yamaha.ma.ymf.Register.OpRegister.WS;
 import static vavi.sound.yamaha.ma.ymf.Register.OpRegister.XOF;
+import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.A3Freq;
+import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.A3Note;
+import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.CarrierMatrix;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.ChannelCount;
+import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.FNUMCoef;
 import static vavi.sound.yamaha.smaf.enums.Enums.VoiceType.VoiceType_FM;
-import static vavi.sound.yamaha.smaf.voice.VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
+import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
 
 
 public class Controller {
 
-    VM35VoicePC defaultPC = new VM35VoicePC() {{
-        var Version = VM35FMVoiceVersion_VM5;
-        var Name = "default";
-        var VoiceType = VoiceType_FM;
-        var FmVoice = new VM35FMVoice() {{
-            Panpot = 15;
-            Bo = 1;
-            Alg = 0;
-            Lfo = 2;
-            Operators = {
+    VM35VoicePC defaultPC;
+
+    Controller() {
+        defaultPC = new VM35VoicePC();
+        defaultPC.Version = VM35FMVoiceVersion.values()[VM35FMVoiceVersion_VM5.ordinal()];
+        defaultPC.Name = "default";
+        defaultPC.VoiceType = VoiceType.values()[VoiceType_FM.ordinal()];
+        defaultPC.FmVoice = new VM35FMVoice();
+        defaultPC.FmVoice.Panpot = 15;
+        defaultPC.FmVoice.Bo = 1;
+        defaultPC.FmVoice.Alg = 0;
+        defaultPC.FmVoice.Lfo = 2;
+        defaultPC.FmVoice.Operators = List.of(
                     new VM35FMOperator() {{
                         Multi = 1;
                         Ar = 15;
@@ -80,10 +89,9 @@ public class Controller {
                         Ar = 15;
                         Rr = 12;
                         Dvb = 3;
-                    }},
-            };
-        }};
-    }};
+                    }}
+            );
+    }
 
     // MIDIMessage は、MIDIメッセージの種類を表す列挙子型です。
     public enum MIDIMessage {
@@ -131,7 +139,7 @@ public class Controller {
     static final int ccBankLSB = 32;
     static final int ccDataEntryLo = 38;
     static final int ccSustainPedal = 64;
-    //	static final int ccSoftPedal = 67;
+//    static final int ccSoftPedal = 67;
 //    static final int ccReverb = 91;
 //    static final int ccChorus = 93;
     static final int ccNRPNLo = 98;
@@ -177,13 +185,13 @@ public class Controller {
     // ControllerOpts は、 NewController のオプションです。
     public static class ControllerOpts {
 
-        Registers Registers;
-        VM5VoiceLib Library;
-        boolean MuteIfPCNotFound;
-        boolean ForceMono;
-        boolean PrintStatus;
-        int[] IgnoreMIDIChannels;
-        int SoloMIDIChannel;
+        protected Registers registers;
+        protected VM5VoiceLib library;
+        protected boolean muteIfPCNotFound;
+        protected boolean forceMono;
+        protected boolean printStatus;
+        public List<Integer> ignoreMIDIChannels;
+        protected int soloMIDIChannel;
     }
 
     // Controller は、MIDIに類似するインタフェースで Chip のレジスタをコントロールします。
@@ -201,17 +209,17 @@ public class Controller {
     chipChannelState[] chipChannelStates = new chipChannelState[ChannelCount];
 
     // NewController は、新しい Controller を作成します。
-    public Controller(Controller.ControllerOpts opts) {
-        this.registers = opts.Registers;
-        this.library = opts.Library;
-        this.muteIfPCNotFound = opts.MuteIfPCNotFound;
-        this.forceMono = opts.ForceMono;
-        this.debugPrintStatus = opts.PrintStatus;
+    public Controller(ControllerOpts opts) {
+        this.registers = opts.registers;
+        this.library = opts.library;
+        this.muteIfPCNotFound = opts.muteIfPCNotFound;
+        this.forceMono = opts.forceMono;
+        this.debugPrintStatus = opts.printStatus;
 
         Map<Integer, Object> ignoreMIDIChannels = new HashMap<>();
-        soloMIDIChannel = opts.SoloMIDIChannel;
+        soloMIDIChannel = opts.soloMIDIChannel;
         this.midiMessages = new ArrayList<>();
-        for (var ch : opts.IgnoreMIDIChannels) {
+        for (var ch : opts.ignoreMIDIChannels) {
             this.ignoreMIDIChannels.put(ch, null);
         }
         for (var i = 0; i < this.chipChannelStates.length; i++) {
@@ -224,7 +232,7 @@ public class Controller {
     }
 
     // PushMIDIMessage は、処理すべきMIDIメッセージを追加します。
-    public synchronized void PushMIDIMessage(Controller.MIDIMessage typ, int timestamp, int midich, int data1, int data2) {
+    public synchronized void PushMIDIMessage(MIDIMessage typ, int timestamp, int midich, int data1, int data2) {
 
         var msg = new midiMessage() {{
             this.typ = typ;
@@ -240,14 +248,13 @@ public class Controller {
                 continue;
             }
             if (i == n) {
-                this.midiMessages.add(this.midiMessages, msg);
+                this.midiMessages.add(msg);
             } else {
-                this.midiMessages.add(this.midiMessages[:i + 1],this.midiMessages[i:]...);
-                this.midiMessages[i] = msg;
+                this.midiMessages.add(i, msg);
             }
             return;
         }
-        this.midiMessages.add(new midiMessage[] { msg }, this.midiMessages...);
+        this.midiMessages.add(0, msg);
     }
 
     Instant lastPrintedAt = Instant.now();
@@ -255,11 +262,11 @@ public class Controller {
     // FlushMIDIMessages は、蓄積されたMIDIメッセージを処理します。
     public synchronized void FlushMIDIMessages(int until) {
 
-        List<Controller.midiMessage> rest;
+        List<midiMessage> rest = List.of();
         for (var i = 0; i < this.midiMessages.size(); i++) {
             var msg = this.midiMessages.get(i);
             if (until < msg.timestamp) {
-                rest = this.midiMessages[i:];
+                rest = this.midiMessages.subList(i, this.midiMessages.size() - 1);
                 break;
             }
             // System.out.printf("%02d: %d\n", msg.midiChannel, until - msg.timestamp)
@@ -280,7 +287,7 @@ public class Controller {
 
         if (this.debugPrintStatus) {
             var now = Instant.now();
-            if (Duration.ofMillis(10) <= now.Sub(lastPrintedAt)) {
+            if (now.minus(Duration.ofMillis(10)).compareTo(lastPrintedAt) < 0) {
                 this.printStatus();
                 lastPrintedAt = now;
             }
@@ -296,33 +303,33 @@ public class Controller {
         System.out.println("Ch MSB-LSB-@PC Instrument       P Vol Exp Pan Vo Note");
         for (var i = 0; i<  this.midiChannelStates.length; i++) {
             var ms = this.midiChannelStates[i];
-            var cs = chipChannelState;
+            var cs = new chipChannelState();
             var voices = 0;
             var lastTime = Instant.now();
             for (var s : this.chipChannelStates) {
                 if (s.midiChannel == i) {
                     voices++;
-                    if (s.time.After(lastTime)) {
+                    if (s.time.isAfter(lastTime)) {
                         cs = s;
                         lastTime = s.time;
                     }
                 }
             }
 
-            monopoly = "-";
-            note = "";
-            instr = ms.debugLastInstrument;
-            pc = "-----------";
-            if (instr == null || instr == smaf.DefaultPC) {
-                instr = smaf.VM35VoicePC()
+            var monopoly = "-";
+            var note = "";
+            var instr = ms.debugLastInstrument;
+            var pc = "-----------";
+            if (instr == null || instr == defaultPC) {
+                instr = new VM35VoicePC();
             } else {
                 if (ms.mono) {
                     monopoly = "M";
                 } else {
                     monopoly = "P";
                 }
-                pc = fmt.Sprintf("%03d-%03d-%03d", ms.bankMSB, ms.bankLSB, ms.pc);
-                note = fmt.Sprintf("%s%d", notes[cs.note % 12], cs.note / 12 - 2);
+                pc = "%03d-%03d-%03d".formatted(ms.bankMSB, ms.bankLSB, ms.pc);
+                note = "%s%d".formatted(notes[cs.note % 12], cs.note / 12 - 2);
             }
             if (voices == 0) {
                 note = "";
@@ -347,19 +354,19 @@ public class Controller {
             this.noteOff(midich, note);
             return;
         }
-        if (this.ignoreMIDIChannels[midich]) {
+        if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
         }
 
         var instr = this.getInstrument(midich, note);
 
-        if (instr.VoiceType != VoiceType_FM) {
+        if (instr.VoiceType.ordinal() != VoiceType_FM.ordinal()) {
             System.out.printf("unsupported voice type: @%d-%d-%d note=%d type=%s\n", instr.BankMsb, instr.BankLsb, instr.Pc, note, instr.VoiceType);
             return;
         }
 
         var chipch = -1;
-        if (this.midiChannelStates[midich].mono || this.forceMono && DrumNote == 0) {
+        if (this.midiChannelStates[midich].mono || this.forceMono && instr.DrumNote == 0) {
             chipch = this.findLastUsedChipChannel(midich, note);
         }
         if (chipch < 0) {
@@ -374,12 +381,13 @@ public class Controller {
 
     // noteOff は、MIDIノートオフ受信時の音源の振る舞いを再現します。
     void noteOff(int midich, int note) {
-        if (this.ignoreMIDIChannels[midich]) {
+        if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
         }
 
         var sus = this.midiChannelStates[midich].sustain;
-        for (chipch, state = range this.chipChannelStates) {
+        for (var chipch = 0; chipch < this.chipChannelStates.length; chipch++) {
+            var state = this.chipChannelStates[chipch];
             if (state.midiChannel == midich && state.note == note) {
                 if (sus < 0x40) {
                     this.keyOff(chipch);
@@ -392,28 +400,29 @@ public class Controller {
 
     // controlChange は、MIDIコントロールチェンジ受信時の音源の振る舞いを再現します。
     void controlChange(int midich, int cc, int value) {
-        if (this.ignoreMIDIChannels[midich]) {
+        if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
         }
         var channel = this.midiChannelStates[midich];
 
         switch (cc) {
             case ccBankMSB:
-                channel.bankMSB = (byte) value
+                channel.bankMSB = (byte) value;
             case ccBankLSB:
-                channel.bankLSB = (byte) (value);
+                channel.bankLSB = (byte) value;
             case ccModulation:
-                channel.modulation = (byte) (value);
-                for (i, state = range this.chipChannelStates) {
+                channel.modulation = (byte) value;
+                for (var i = 0; i < this.chipChannelStates.length; i++) {
+                    var state = this.chipChannelStates[i];
                     if (state.midiChannel == midich) {
-                        flags = state.flags;
+                        var flags = state.flags;
                         if (modThresh <= value) {
                             state.flags |= flagVibrato;
                             if (state.flags != flags) {
                                 this.writeModulation(i, state.instrument, true);
                             }
                         } else {
-                            state.flags &= ^ flagVibrato;
+                            state.flags &= ~flagVibrato;
                             if (state.flags != flags) {
                                 this.writeModulation(i, state.instrument, false);
                             }
@@ -424,16 +433,16 @@ public class Controller {
             case ccVolume: // change volume
                 channel.volume = (byte) (value);
                 if (this.soloMIDIChannel < 0 || midich == this.soloMIDIChannel) {
-                    this.writeChannelsUsingMIDIChannel(midich, ymf.VOLUME, value);
+                    this.writeChannelsUsingMIDIChannel(midich, VOLUME, value);
                 }
 
             case ccExpression: // change expression
                 channel.expression = (byte) (value);
-                this.writeChannelsUsingMIDIChannel(midich, ymf.EXPRESSION, value);
+                this.writeChannelsUsingMIDIChannel(midich, EXPRESSION, value);
 
             case ccPan: // change pan (balance)
                 channel.pan = (byte) (value);
-                this.writeChannelsUsingMIDIChannel(midich, ymf.CHPAN, value);
+                this.writeChannelsUsingMIDIChannel(midich, CHPAN, value);
 
             case ccSustainPedal: // change sustain pedal (hold)
                 channel.sustain = (byte) (value);
@@ -448,7 +457,8 @@ public class Controller {
                 channel.mono = false;
 
             case ccNotesOff: // turn off all notes that are not sustained
-                for (var i, state = range this.chipChannelStates) {
+                for (var i = 0; i < this.chipChannelStates.length; i++) {
+                    var state = this.chipChannelStates[i];
                     if (state.midiChannel == midich) {
                         if (channel.sustain < 0x40) {
                             this.keyOff(i);
@@ -459,7 +469,8 @@ public class Controller {
                 }
 
             case ccSoundsOff: // release all notes for this channel
-                for (var i, state = range this.chipChannelStates) {
+                for (var i = 0; i < this.chipChannelStates.length; i++) {
+                    var state = this.chipChannelStates[i];
                     if (state.midiChannel == midich) {
                         this.keyOff(i);
                     }
@@ -488,7 +499,7 @@ public class Controller {
 
     // programChange は、MIDIプログラムチェンジ受信時の音源の振る舞いを再現します。
     void programChange(int midich, int pc) {
-        if (this.ignoreMIDIChannels[midich]) {
+        if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
         }
         this.midiChannelStates[midich].pc = (byte) (pc);
@@ -496,14 +507,15 @@ public class Controller {
 
     // pitchBend は、MIDIピッチベンド受信時の音源の振る舞いを再現します。
     void pitchBend(int midich, int l, int h) {
-        if (this.ignoreMIDIChannels[midich]) {
+        if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
         }
 
         var pitch = h * 128 + l - 8192;
         pitch = (int) ((double) (pitch) * (double) (this.midiChannelStates[midich].pitchSens) / (200 * 128) + 64);
         this.midiChannelStates[midich].pitch = (byte) (pitch);
-        for (var i, state = range this.chipChannelStates) {
+        for (var i = 0; i < this.chipChannelStates.length; i++) {
+            var state = this.chipChannelStates[i];
             if (state.midiChannel == midich) {
                 state.pitch = state.finetune + pitch;
                 this.writeFrequency(i, state.realnote, state.pitch);
@@ -513,18 +525,19 @@ public class Controller {
 
     // Reset は、音源の状態をリセットします。
     synchronized void Reset() {
-        for (var i = range this.chipChannelStates) {
+        for (var i = 0; i < this.chipChannelStates.length; i++) {
             this.resetChipChannel(i);
         }
-        for (var i = range this.midiChannelStates) {
+        for (var i = 0; i < this.midiChannelStates.length; i++) {
             this.resetMIDIChannel(i);
         }
     }
 
     void writeModulation(int chipch, VM35VoicePC instr, boolean state) {
         // TODO: モジュレータではevbだけを見る(stateは無視)？
-        for (var i, o = range instr.FmVoice.Operators) {
-            this.registers.WriteOperator(chipch, i, ymf.EVB, boolean2int(o.Evb || state));
+        for (var i = 0; i < instr.FmVoice.Operators.size(); i++) {
+            var o = instr.FmVoice.Operators.get(i);
+            this.registers.writeOperator(chipch, i, EVB, boolean2int(o.Evb || state));
         }
     }
 
@@ -537,7 +550,7 @@ public class Controller {
         if (modThresh <= midiState.modulation) {
             chipState.flags |= flagVibrato;
         }
-        chipState.time = time.Now();
+        chipState.time = Instant.now();
 
         chipState.finetune = 0;
         if (instr.DrumNote != 0) {
@@ -549,30 +562,31 @@ public class Controller {
         chipState.realnote = note;
 
         chipState.minRR = 15;
-        for (var i, op = range instr.FmVoice.Operators) {
-            isCarrier = ymfdata.CarrierMatrix[instr.FmVoice.Alg][i];
+        for (var i = 0; i < instr.FmVoice.Operators.size(); i++) {
+            var op = instr.FmVoice.Operators.get(i);
+            var isCarrier = CarrierMatrix[instr.FmVoice.Alg][i];
             if (isCarrier && (int) (op.Rr) < chipState.minRR) {
                 chipState.minRR = (int) (op.Rr);
             }
         }
 
         this.writeInstrument(chipch, instr);
-        this.writeModulation(chipch, instr, chipState.flags & flagVibrato != 0);
-        this.registers.WriteChannel(chipch, CHPAN, (int) (this.midiChannelStates[midich].pan));
+        this.writeModulation(chipch, instr, (chipState.flags & flagVibrato) != 0);
+        this.registers.writeChannel(chipch, CHPAN, (int) (this.midiChannelStates[midich].pan));
         if (this.soloMIDIChannel < 0 || midich == this.soloMIDIChannel) {
-            this.registers.WriteChannel(chipch, VOLUME, (int) (this.midiChannelStates[midich].volume));
+            this.registers.writeChannel(chipch, VOLUME, (int) (this.midiChannelStates[midich].volume));
         } else {
-            this.registers.WriteChannel(chipch, VOLUME, 0);
+            this.registers.writeChannel(chipch, VOLUME, 0);
         }
-        this.registers.WriteChannel(chipch, EXPRESSION, (int) (this.midiChannelStates[midich].expression));
-        this.registers.WriteChannel(chipch, VELOCITY, velocity);
+        this.registers.writeChannel(chipch, EXPRESSION, (int) (this.midiChannelStates[midich].expression));
+        this.registers.writeChannel(chipch, VELOCITY, velocity);
         this.writeFrequency(chipch, note, chipState.pitch);
         this.keyOn(chipch, midich);
     }
 
     void resetChipChannel(int chipch) {
         var state = this.chipChannelStates[chipch];
-        state.time = time.Time;
+        state.time = Instant.now();
         state.flags = flagReleased | flagFree;
         state.minRR = 15;
         state.instrument = null;
@@ -581,31 +595,33 @@ public class Controller {
         // state.realnote = 0
         // state.finetune = 0
         // state.pitch = 0
-        this.registers.WriteChannel(chipch, RESET, 1);
+        this.registers.writeChannel(chipch, RESET, 1);
     }
 
     void releaseSustain(int midich) {
-        for (var i, state :this.chipChannelStates){
-            if (state.midiChannel == midich && state.flags & flagSustain != 0) {
+        for (var i = 0; i < this.chipChannelStates.length; i++) {
+            var state = this.chipChannelStates[i];
+            if (state.midiChannel == midich && (state.flags & flagSustain) != 0) {
                 this.keyOff(i);
             }
         }
     }
 
     // findLastUsedChipChannel は、指定MIDIチャンネルの指定ノートを発音するとき、
-// MONOモード時に収容先となるチップのチャンネルを選択します。
+    // MONOモード時に収容先となるチップのチャンネルを選択します。
     int findLastUsedChipChannel(int midich, int note) {
-        var now = time.Now();
+        var now = Instant.now();
         var found = -1;
         var minDelta = Long.MIN_VALUE;
-        for (i, state :this.chipChannelStates){
+        for (var i = 0; i < this.chipChannelStates.length; i++){
+            var state = this.chipChannelStates[i];
             if (state.midiChannel != midich) {
                 continue;
             }
             if (state.note == note) {
                 return i;
             }
-            delta = int(now.Sub(state.time)) * state.minRR;
+            var delta = Duration.between(state.time, now).toMillis() * state.minRR;
             if (delta < minDelta) {
                 minDelta = delta;
                 found = i;
@@ -628,27 +644,28 @@ public class Controller {
         // }
 
         // 無音のチャンネルがあれば選択
-        for (var i, state = range this.chipChannelStates) {
-            if (state.flags & flagFree != 0) {
+        for (var i = 0; i < this.chipChannelStates.length; i++) {
+            var state = this.chipChannelStates[i];
+            if ((state.flags & flagFree) != 0) {
                 return i;
-                ;
             }
         }
 
-        var now = time.Now();
+        var now = Instant.now();
         var foundTotal = -1;
         var foundReleased = -1;
         var maxDeltaTotal = -1;
         var maxAttenuationReleased = -1;
-        for (i, state = range this.chipChannelStates) {
-            var delta = (int) (now.Sub(state.time))
+        for (var i = 0; i < this.chipChannelStates.length; i++) {
+            var state = this.chipChannelStates[i];
+            var delta = (int) Duration.between(state.time, now).toMillis();
             if (maxDeltaTotal < delta) {
                 maxDeltaTotal = delta;
                 foundTotal = i;
             }
             // -dB ∝ 2^RR * time
-            var attenuation = delta * (int) (1 << uint(state.minRR));
-            if (maxAttenuationReleased < attenuation && state.flags & flagReleased != 0) {
+            var attenuation = delta * (1 << state.minRR);
+            if (maxAttenuationReleased < attenuation && (state.flags & flagReleased) != 0) {
                 maxAttenuationReleased = attenuation;
                 foundReleased = i;
             }
@@ -669,15 +686,13 @@ public class Controller {
         return -1;
     }
 
-	(*smaf.VM35VoicePC,boolean)
-
-    getInstrument(int midich, int note) {
+	VM35VoicePC getInstrument(int midich, int note) {
         var s = this.midiChannelStates[midich];
-        var result, ok = this.library.Get(int(s.bankMSB), int(s.bankLSB), int(s.pc), note);
-        if (!ok && !this.muteIfPCNotFound) {
+        var result = this.library.Get(s.bankMSB, s.bankLSB, s.pc, note);
+        if (!this.muteIfPCNotFound) {
             result = defaultPC;
         }
-        return result,ok;
+        return result;
     }
 
     void resetMIDIChannel(int midich) {
@@ -691,23 +706,24 @@ public class Controller {
     }
 
     void writeChannelsUsingMIDIChannel(int midich, ChRegister regbase, int value) {
-        for (var i, state = range this.chipChannelStates) {
+        for (var i = 0; i < this.chipChannelStates.length; i++) {
+            var state = this.chipChannelStates[i];
             if (state.midiChannel == midich) {
-                this.registers.WriteChannel(i, regbase, value);
+                this.registers.writeChannel(i, regbase, value);
             }
         }
     }
 
     void writeAllOperators(int chipch, OpRegister regbase, int value) {
-        this.registers.WriteOperator(chipch, 0, regbase, value);
-        this.registers.WriteOperator(chipch, 1, regbase, value);
-        this.registers.WriteOperator(chipch, 2, regbase, value);
-        this.registers.WriteOperator(chipch, 3, regbase, value);
+        this.registers.writeOperator(chipch, 0, regbase, value);
+        this.registers.writeOperator(chipch, 1, regbase, value);
+        this.registers.writeOperator(chipch, 2, regbase, value);
+        this.registers.writeOperator(chipch, 3, regbase, value);
     }
 
     void writeFrequency(int chipch, int note, int pitch) {
-        var n = double(note - ymfdata.A3Note) + double(pitch - 64) / 32.0;
-        var freq = ymfdata.A3Freq * math.Pow(2.0, n / 12.0);
+        var n = (double)(note - A3Note) + (double) (pitch - 64) / 32.0;
+        var freq = A3Freq * Math.pow(2.0, n / 12.0);
 
         var block = (note + 3 - 12) / 12;
         if (block < 0) {
@@ -716,7 +732,7 @@ public class Controller {
             block = 7;
         }
 
-        var fnumF64 = freq * ymfdata.FNUMCoef;
+        var fnumF64 = freq * FNUMCoef;
         var blockUint = (int) (block);
         var fnum = (int) (fnumF64 * 2.0 + (double) ((int) (1) << blockUint >> 1)) >> blockUint;
         if (fnum < 0) {
@@ -733,20 +749,20 @@ public class Controller {
             block = 7;
         }
 
-        this.registers.WriteChannel(chipch, FNUM, fnum);
-        this.registers.WriteChannel(chipch, BLOCK, block);
+        this.registers.writeChannel(chipch, FNUM, fnum);
+        this.registers.writeChannel(chipch, BLOCK, block);
     }
 
     void keyOn(int chipch, int midich) {
-        this.registers.DebugSetMIDIChannel(chipch, midich);
-        this.registers.WriteChannel(chipch, KON, 1);
+        this.registers.debugSetMIDIChannel(chipch, midich);
+        this.registers.writeChannel(chipch, KON, 1);
     }
 
     void keyOff(int chipch) {
         var state = this.chipChannelStates[chipch];
-        state.time = time.Now();
+        state.time = Instant.now();
         state.flags = flagReleased;
-        this.registers.WriteChannel(chipch, KON, 0);
+        this.registers.writeChannel(chipch, KON, 0);
     }
 
     static int boolean2int(boolean b) {
@@ -759,29 +775,30 @@ public class Controller {
     void writeInstrument(int chipch, VM35VoicePC instr) {
         this.writeAllOperators(chipch, TL, 0x3f); // no volume
 
-        for (var i = 0; i < Operators) {
-            this.registers.WriteOperator(chipch, i, EAM, boolean2int(Eam));
-            this.registers.WriteOperator(chipch, i, EVB, boolean2int(Evb));
-            this.registers.WriteOperator(chipch, i, DAM, (int) (Dam));
-            this.registers.WriteOperator(chipch, i, DVB, (int) (Dvb));
-            this.registers.WriteOperator(chipch, i, DT, (int) (Dt));
-            this.registers.WriteOperator(chipch, i, KSL, (int) (Ksl));
-            this.registers.WriteOperator(chipch, i, KSR, boolean2int(Ksr));
-            this.registers.WriteOperator(chipch, i, WS, (int) (Ws));
-            this.registers.WriteOperator(chipch, i, MULT, (int) (Multi));
-            this.registers.WriteOperator(chipch, i, FB, (int) (op.Fb));
-            this.registers.WriteOperator(chipch, i, AR, (int) (op.Ar));
-            this.registers.WriteOperator(chipch, i, DR, (int) (op.Dr));
-            this.registers.WriteOperator(chipch, i, SL, (int) (op.Sl));
-            this.registers.WriteOperator(chipch, i, SR, (int) (op.Sr));
-            this.registers.WriteOperator(chipch, i, RR, (int) (op.Rr));
-            this.registers.WriteOperator(chipch, i, TL, (int) (op.Tl));
-            this.registers.WriteOperator(chipch, i, XOF, boolean2int(op.Xof));
+        for (var i = 0; i < instr.FmVoice.Operators.size(); i++) {
+            var op = instr.FmVoice.Operators.get(i);
+            this.registers.writeOperator(chipch, i, EAM, boolean2int(op.Eam));
+            this.registers.writeOperator(chipch, i, EVB, boolean2int(op.Evb));
+            this.registers.writeOperator(chipch, i, DAM, (int) (op.Dam));
+            this.registers.writeOperator(chipch, i, DVB, (int) (op.Dvb));
+            this.registers.writeOperator(chipch, i, DT, (int) (op.Dt));
+            this.registers.writeOperator(chipch, i, KSL, (int) (op.Ksl));
+            this.registers.writeOperator(chipch, i, KSR, boolean2int(op.Ksr));
+            this.registers.writeOperator(chipch, i, WS, (int) (op.Ws));
+            this.registers.writeOperator(chipch, i, MULT, (int) (op.Multi));
+            this.registers.writeOperator(chipch, i, FB, (int) (op.Fb));
+            this.registers.writeOperator(chipch, i, AR, (int) (op.Ar));
+            this.registers.writeOperator(chipch, i, DR, (int) (op.Dr));
+            this.registers.writeOperator(chipch, i, SL, (int) (op.Sl));
+            this.registers.writeOperator(chipch, i, SR, (int) (op.Sr));
+            this.registers.writeOperator(chipch, i, RR, (int) (op.Rr));
+            this.registers.writeOperator(chipch, i, TL, (int) (op.Tl));
+            this.registers.writeOperator(chipch, i, XOF, boolean2int(op.Xof));
         }
 
-        this.registers.WriteChannel(chipch, ALG, (int) (instr.FmVoice.Alg));
-        this.registers.WriteChannel(chipch, LFO, (int) (instr.FmVoice.Lfo));
-        this.registers.WriteChannel(chipch, PANPOT, (int) (instr.FmVoice.Panpot));
-        this.registers.WriteChannel(chipch, BO, (int) (instr.FmVoice.Bo));
+        this.registers.writeChannel(chipch, ALG, (int) (instr.FmVoice.Alg));
+        this.registers.writeChannel(chipch, LFO, (int) (instr.FmVoice.Lfo));
+        this.registers.writeChannel(chipch, PANPOT, (int) (instr.FmVoice.Panpot));
+        this.registers.writeChannel(chipch, BO, (int) (instr.FmVoice.Bo));
     }
 }

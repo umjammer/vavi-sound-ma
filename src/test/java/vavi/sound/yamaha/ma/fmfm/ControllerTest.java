@@ -12,6 +12,7 @@ import vavi.sound.yamaha.ma.sim.Registers;
 import vavi.sound.yamaha.ma.ymf.Register.ChRegister;
 import vavi.sound.yamaha.ma.ymf.Register.OpRegister;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vavi.sound.yamaha.ma.ymf.Register.ChRegister.ALG;
 import static vavi.sound.yamaha.ma.ymf.Register.ChRegister.BO;
@@ -92,7 +93,7 @@ public class ControllerTest {
 	void TestController_writeFrequency() {
 		var regs = new Registers();
 		var ctrl = new Controller(new ControllerOpts() {{
-			Registers = regs;
+			registers = regs;
 		}});
 		var fnumPrev = 300;
 		for (var i = 0; i < 12; i++) {
@@ -106,7 +107,7 @@ public class ControllerTest {
 				assertTrue(fnumPrev < fnum);
 			}
 			fnumPrev = fnum;
-			// t.Errorf("%d: block=%d bo=%d fnum=%d", n, ch[ymf.BLOCK], ch[ymf.BO], ch[ymf.FNUM])
+			// t.Errorf("%d: block=%d bo=%d fnum=%d", n, ch[ymf.BLOCK], ch[ymf.bo], ch[ymf.FNUM])
 			ctrl.noteOff(0, n);
 			ctrl.resetChipChannel(0);
 		}

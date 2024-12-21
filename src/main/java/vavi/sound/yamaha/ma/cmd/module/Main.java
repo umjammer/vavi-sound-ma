@@ -7,13 +7,20 @@ package vavi.sound.yamaha.ma.cmd.module;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import vavi.sound.yamaha.ma.fmfm.Controller;
 import vavi.sound.yamaha.ma.fmfm.Controller.ControllerOpts;
 import vavi.sound.yamaha.ma.sim.Chip;
 import vavi.sound.yamaha.ma.sim.Registers;
-import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
+import vavi.sound.yamaha.smaf.pb.smaf.Smaf.VM35VoicePC;
+import vavi.sound.yamaha.smaf.pb.smaf.pb.VM5VoiceLib;
 
+import static vavi.sound.yamaha.ma.cmd.module.Helper.collectInts;
+import static vavi.sound.yamaha.ma.cmd.module.Helper.writeBytes;
+import static vavi.sound.yamaha.ma.cmd.module.Helper.writeInts;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIControlChange;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOff;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOn;
@@ -26,16 +33,16 @@ public class Main {
     VM5VoiceLib lib;
     Chip chip;
     Controller ctrl;
-    sync.Once initOnce;
 
     // FMFMLoadLibrary は、ライブラリをロードします。
     //export FMFMLoadLibrary
     int FMFMLoadLibrary(String voicePath) throws IOException {
         var voicePathGo = Path.of(voicePath);
-        try (var s = Files.list(voicePathGo)){
+        try (var s = Files.list(voicePathGo)) {
+            AtomicInteger i = new AtomicInteger();
 			s.forEach(p -> {
 				if (!Files.isDirectory(p) && p.getFileName().toString().endsWith(".vm5.pb")) {
-					lib.LoadFile(voicePathGo + "/" + i.Name());
+					lib.LoadFile(voicePathGo.resolve(p.getFileName()).toString());
 				}
 			});
         }
@@ -44,18 +51,18 @@ public class Main {
 
     // FMFMInit は、音源を初期化します。
     int FMFMInit(double sampleRate) {
-        var result = 0;
-        initOnce.Do(() -> {
-            chip = new Chip((double) (sampleRate), -15.0, -1);
+        AtomicInteger result = new AtomicInteger();
+        Executors.newSingleThreadExecutor().submit(() -> {
+            var chip = new Chip((int) sampleRate, -15.0, -1);
             var regs = new Registers(chip);
             var opts = new ControllerOpts() {{
-                Registers = regs;
-                Library = lib;
+                registers = regs;
+                library = Main.this.lib;
             }};
             ctrl = new Controller(opts);
-            result = 1;
+            result.set(1);
         });
-        return result;
+        return result.get();
     }
 
     // FMFMFlushMIDIMessages は、蓄積されたMIDIメッセージを処理します。
@@ -89,57 +96,62 @@ public class Main {
     }
 
     // FMFMListBankMSB は、登録されている音色の選択可能なMSBの一覧を返します。
-    long FMFMListBankMSB(long out) {
-        return writeInts(out, collectInts(func(ch chan < - int){
-            for (_, p = range lib.Programs) {
-                ch < -(int) (p.BankMsb);
+    public long FMFMListBankMSB(long[] out) {
+        return writeInts(out, collectInts(() -> {
+            var ch = new ArrayList<Integer>();
+            for (var p : lib.Programs) {
+                ch.add(p.BankMsb);
             }
+            return ch;
         }));
     }
 
     // FMFMListBankLSB は、登録されている音色の選択可能なLSBの一覧を返します。
-    long FMFMListBankLSB(long out, long msb) {
-        return writeInts(out, collectInts((chan) -> {
-            for (_, p = range lib.Programs) {
-                if (p.BankMsb == uint32(msb)) {
-                    ch < - int(p.BankLsb);
+    public long FMFMListBankLSB(long[] out, long msb) {
+        return writeInts(out, collectInts(() -> {
+            var ch = new ArrayList<Integer>();
+            for (var p : lib.Programs) {
+                if (p.BankMsb == msb) {
+                    ch.add(p.BankLsb);
                 }
             }
+            return ch;
         }));
     }
 
     // FMFMListPC は、登録されている音色の選択可能なプログラムチェンジの一覧を返します。
-    long FMFMListPC(long out, long msb, long lsb) {
-        return writeInts(out, collectInts(func(ch chan < - int){
-            for (_, p = range lib.Programs) {
+    long FMFMListPC(long[] out, long msb, long lsb) {
+        return writeInts(out, collectInts(() -> {
+            var ch = new ArrayList<Integer>();
+            for (var p : lib.Programs) {
                 if (p.BankMsb == (int) (msb) && p.BankLsb == (int) (lsb)) {
-                    ch < - int(p.Pc);
+                    ch.add(p.Pc);
                 }
             }
+            return ch;
         }));
     }
 
     // FMFMListDrumNote は、登録されている音色の選択可能なドラムノートの一覧を返します。
-    long FMFMListDrumNote(long out, long msb, long lsb, long pc) {
-        return writeInts(out, collectInts(func(ch chan < - int){
-            for (_, p = range lib.Programs) {
+    long FMFMListDrumNote(long[] out, long msb, long lsb, long pc) {
+        return writeInts(out, collectInts(() -> {
+            var ch = new ArrayList<Integer>();
+            for (var p : lib.Programs) {
                 if (p.BankMsb == (int) (msb) && p.BankLsb == (int) (lsb) && p.Pc == (int) (pc)) {
-                    ch < - int(p.DrumNote);
+                    ch.add(p.DrumNote);
                 }
             }
+            return ch;
         }));
     }
 
     // FMFMGetVoice は、音色データを Protocol Buffers 形式にエンコードして返します。
-    long FMFMGetVoice(long out, long msb, long lsb, long pc, long drumNote) {
+    long FMFMGetVoice(byte[] out, long msb, long lsb, long pc, long drumNote) {
         // TODO: implement
-        for (var _, p = range lib.Programs) {
+        for (var p : lib.Programs) {
+            var ch = new ArrayList<Integer>();
             if (p.BankMsb == (int) (msb) && p.BankLsb == (int) (lsb) && p.Pc == (int) (pc)) {
-                var data, err = proto.Marshal(p);
-                if (err != null) {
-                    System.err.printf((err.Error());
-                    return 0;
-                }
+                var data = VM35VoicePC.newBuilder(p).build();
                 return writeBytes(out, data);
             }
         }
@@ -148,6 +160,6 @@ public class Main {
 
     // FMFMNext は、次のサンプルを生成・取得します。
     double[] FMFMNext() {
-        return chip.Next();
+        return chip.next();
     }
 }

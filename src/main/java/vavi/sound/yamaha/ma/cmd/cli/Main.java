@@ -1,191 +1,146 @@
-/* vavi.sound.yamaha.ma.cmd.cli;
+/*
+ * https://github.com/but80/fmfm.core
+ */
+
+package vavi.sound.yamaha.ma.cmd.cli;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
+import org.klab.commons.cli.Binder.Context;
+import org.klab.commons.cli.Option;
+import org.klab.commons.cli.Options;
+import vavi.sound.yamaha.ma.cmd.cli.internal.player.Limiter;
+import vavi.sound.yamaha.ma.cmd.cli.internal.player.Renderer;
+import vavi.sound.yamaha.ma.cmd.cli.internal.player.Sequencer;
+import vavi.sound.yamaha.ma.fmfm.Controller.ControllerOpts;
+import vavi.sound.yamaha.ma.sim.Chip;
+import vavi.sound.yamaha.ma.sim.Registers;
+import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
 
 
-import javassist.tools.Dump;
+/**
+ * YAMAHA MA-5/YMF825 clone synthesizer
+ *
+ * @author <a href="mailto:mersenne.sister@gmail.com">but80</a>
+ */
+@Options()
+public class Main {
 
-
-class Main {
-
-    String version;
+    static String version;
 
     void init() {
-        if ((version.isEmpty())) {
+        if (version.isEmpty()) {
             version = "unknown";
         }
     }
 
-    var listCmd = cli.Command
+    @Option(argName = "list", option = "l", description = "List MIDI devices")
+    String listCmd;
 
-    {
-Name:
-        "list",
-                Aliases:   []string {
-        "l"
-    },
-Usage:
-        "List MIDI devices",
-                ArgsUsage:" ",
-            Flags:     []cli.Flag {
-    },
-Action:
-        func(ctx * cli.Context) error {
-        devices = player.ListMIDIDeivces()
-        for (_, dev = range devices) {
-            System.err.printf((dev)
+    Consumer<Context> x = (ctx) -> {
+        devices = player.ListMIDIDeivces();
+        for (var dev : devices) {
+            System.err.printf(dev);
         }
-        return null
-    },
-    }
+    };
 
-    var midiCmd = cli.Command
+    @Option(argName = "midi", option = "m", description = "Listen MIDI events", usage = "[<Input MIDI device>]")
+    String midiCmd;
 
-    {
-Name:
-        "midi",
-                Aliases:   []string {
-        "m"
-    },
-Usage:
-        "Listen MIDI events",
-                ArgsUsage:"[<Input MIDI device>]",
-            Flags: []cli.Flag {
-        cli.BoolFlag {
-Name:
-            "mono, m",
-                    Usage: `Force mono mode in all MIDI channels except drum PC`,
-        },
-        cli.BoolFlag {
-Name:
-            "mute-nopc, z",
-                    Usage: `Mute if program change is not found`,
-        },
-        cli.Float64Flag {
-Name:
-            "level, l",
-                    Usage: `Total level in dB`,
-Value:
-            -12.0,
-        },
-        cli.Float64Flag {
-Name:
-            "limiter, c",
-                    Usage: `player.Limiter threshold in dB`,
-Value:
-            -6.0,
-        },
-        cli.IntFlag {
-Name:
-            "ignore, n",
-                    Usage: `Ignore specified MIDI channel`,
-        },
-        cli.IntFlag {
-Name:
-            "solo, s",
-                    Usage: `Accept only specified MIDI sim.channel`,
-        },
-        cli.IntFlag {
-Name:
-            "dump, d",
-                    Usage: `Dump MIDI sim.channel`,
-        },
-        cli.BoolFlag {
-Name:
-            "print, p",
-                    Usage: `Print status`,
-        },
-    },
-Action:
-        func(ctx * cli.Context) error {
-        args = ctx.Args()
-        midiDevice = ""
+    @Option(argName = "mono", option = "m", description = "Force mono mode in all MIDI channels except drum PC")
+    boolean mono;
+
+    @Option(argName = "mute-nopc", option = "z", description = "Mute if program change is not found")
+    boolean muteNoPc;
+
+    @Option(argName = "level", option = "l", description = "Total level in dB")
+    float level= -12.0f;
+    @Option(argName = "limiter", option = "c", description = "player.Limiter threshold in dB")
+    double limiter = -6.0;
+    @Option(argName = "ignore", option = "n", description = "Ignore specified MIDI channel")
+    int ignore;
+    @Option(argName = "solo", option = "s",description = "Accept only specified MIDI sim.channel")
+    int solo;
+    @Option(argName = "dump", option = "d", description = "Dump MIDI sim.channel")
+    int dump;
+    @Option(argName = "print", option = "p",description = "Print status")
+    boolean print;
+
+    Consumer<Context> y = (ctx) -> {
+        var args = ctx.Args();
+        var midiDevice = "";
         if (1 <= ctx.NArg()) {
-            midiDevice = args[0]
+            midiDevice = args[0];
         }
 
-        info, err = ioutil.ReadDir("voice")
-        if (err != null) {
-            panic(err)
-        }
-        var lib smaf.VM5VoiceLib
-        for (_, i = range info) {
-            if (i.IsDir() || !strings.HasSuffix(i.Name(), ".vm5.pb")) {
-                continue
+        var info = Files.list(Path.of("voice"));
+        AtomicReference<VM5VoiceLib> lib = new AtomicReference<>();
+        info.forEach((i) -> {
+            if (Files.isDirectory(i) || !i.getFileName().toString().endsWith(".vm5.pb")) {
+                return;
             }
-            err = lib.LoadFile("voice/" + i.Name())
-            if (err != null) {
-                panic(err)
+            try {
+                lib.set(new VM5VoiceLib(Path.of("voice/").resolve(i.getFileName()).toString()));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
+        });
+
+        var dumpMIDIChannel = -1;
+        if (0 < dump) {
+            dumpMIDIChannel = dump - 1;
         }
 
-        dumpMIDIChannel = -1
-        if (0 < ctx.Int("dump")) {
-            dumpMIDIChannel = ctx.Int("dump") - 1
+        var renderer = new Renderer();
+        var limiter = new Limiter(renderer.Parameters.getSampleRate());
+        limiter.SetThreshold(this.limiter);
+        renderer.Insert(limiter);
+        var chip = new Chip((int) renderer.Parameters.getSampleRate(),
+                level,
+                dumpMIDIChannel
+        );
+        var regs = new Registers(chip);
+        var opts = new ControllerOpts() {{
+            registers = regs;
+            library = lib.get().programs.get(0);
+            muteIfPCNotFound = muteNoPc;
+            forceMono = mono;
+            printStatus = print;
+            ignoreMIDIChannels = new ArrayList<>();
+            soloMIDIChannel = dumpMIDIChannel;
+        }};
+        if (0 < ignore) {
+            opts.ignoreMIDIChannels.add(ignore - 1);
         }
-
-        renderer = player.NewRenderer()
-        limiter = player.NewLimiter(renderer.Parameters.SampleRate)
-        limiter.SetThreshold(ctx.Float64("limiter"))
-        renderer.Insert(limiter)
-        chip = sim.NewChip(
-                renderer.Parameters.SampleRate,
-                ctx.Float64("level"),
-                dumpMIDIChannel,
-                )
-        regs = sim.NewRegisters(chip)
-        opts = & fmfm.ControllerOpts {
-Registers:
-            regs,
-                    Library:            &lib,
-                    MuteIfPCNotFound:ctx.Bool("mute-nopc"),
-                    ForceMono:ctx.Bool("mono"),
-                    PrintStatus:ctx.Bool("print"),
-                    IgnoreMIDIChannels: []int{
-            },
-SoloMIDIChannel:
-            dumpMIDIChannel,
-        }
-        if (0 < ctx.Int("ignore")) {
-            opts.IgnoreMIDIChannels = append(opts.IgnoreMIDIChannels, ctx.Int("ignore") - 1)
-        }
-        if (0 < ctx.Int("solo")) {
-            for i = 0;
-            i < 16;
-            i++ {
-                if (i == ctx.Int("solo") - 1) {
-                    continue
+        if (0 < solo) {
+            for (var i = 0; i < 16; i++) {
+                if (i == solo - 1) {
+                    continue;
                 }
-                opts.IgnoreMIDIChannels = append(opts.IgnoreMIDIChannels, i)
+                opts.ignoreMIDIChannels.add(i);
             }
         }
-        seq = player.NewSequencer(midiDevice, opts)
-        defer seq.Close()
-        renderer.Start(chip.Next, seq.FlushMIDIMessages)
-        time.Sleep(24 * time.Hour)
-        return null
-    },
-    }
+        try (var seq = new Sequencer(midiDevice, opts)) {
+            renderer.start(chip.next(), seq.flushMIDIMessages);
+            try { Thread.sleep(24 * 60 * 60 * 1000); } catch (InterruptedException ignore) {}
+        }
+    };
 
-    func main() {
-        app = cli.NewApp()
-        app.Name = "fmfm-cli"
-        app.Version = version
-        app.Usage = "YAMAHA MA-5/YMF825 clone synthesizer"
-        app.Authors = []cli.Author {
-            {
-Name:
-                "but80",
-                        Email:"mersenne.sister@gmail.com",
-            },
-        }
-        app.HelpName = "fmfm-cli"
-        app.Commands = []cli.Command {
-            midiCmd,
-                    listCmd,
-        }
-        app.Action = func(ctx * cli.Context) error {
-            cli.ShowAppHelp(ctx)
-            return null
-        }
-        app.Run(os.Args)
+    public static void main(String[] args) {
+        var app = new Main();
+        Options.Util.bind(args, app);
+//        app.Name = "fmfm-cli";
+//        app.HelpName = "fmfm-cli";
+//        app.Commands = new Command[] { midiCmd, listCmd };
+//        app.Action = (cli.Context ctx) -> {
+//            cli.ShowAppHelp(ctx);
+//        };
+//        app.Run(os.Args);
     }
 }

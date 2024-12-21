@@ -25,13 +25,13 @@ public class Limiter implements Insertion {
     int bufferPos;
 
     // NewLimiter は、新しい Limiter を作成します。
-    Limiter(double sampleRate) {
+    public Limiter(double sampleRate) {
         this.sampleRate = sampleRate;
         this.SetThreshold(-3.0).SetLookAhead(.005).SetAttack(.005).SetRelease(.02);
     }
 
     // SetThreshold は、スレッショルドレベル [dB] を設定します。
-    Limiter SetThreshold(double v) {
+    public Limiter SetThreshold(double v) {
         this.threshold = Math.pow(10, v / 20.0);
         this.thresholdDB = v;
         return this;

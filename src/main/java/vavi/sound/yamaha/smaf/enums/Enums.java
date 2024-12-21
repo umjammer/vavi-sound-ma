@@ -4,8 +4,12 @@
 
 package vavi.sound.yamaha.smaf.enums;
 
+import com.google.gson.Gson;
+
 
 public class Enums {
+
+    private static Gson gson = new Gson().newBuilder().create();
 
     public enum VoiceType {
 
@@ -25,7 +29,7 @@ public class Enums {
         }
 
         byte[] MarshalJSON() {
-            return gson.Marshal(toString());
+            return gson.toJson(toString()).getBytes();
         }
     }
 
@@ -46,10 +50,10 @@ public class Enums {
         }
 
         public String toString() {
-            return "%d[ %s ]".formatted(this, s);
+            return "%s[ %s ]".formatted(this, s);
         }
 
-        int OperatorCount() {
+        public int operatorCount() {
             if (this.ordinal() < 2) {
                 return 2;
             } else {
@@ -67,7 +71,7 @@ public class Enums {
         final int v;
         BasicOctave(int v) { this.v = v; }
 
-        Note NoteDiff( BasicOctave o) {
+        Note diffNote(BasicOctave o) {
             return switch (o.v) {
                 case 0 -> Note.values()[1 * 12];
                 case 2 -> Note.values()[-1 * 12];
@@ -112,7 +116,7 @@ public class Enums {
         Panpot30,
         Panpot31;
 
-        public String toString() {
+        @Override public String toString() {
             var v = ordinal();
             if (v == 15) {
                 return "C";
@@ -127,14 +131,28 @@ public class Enums {
     }
 
     public enum Multiplier {
+        Multiplier0,
+        Multiplier1,
+        Multiplier2,
+        Multiplier3,
+        Multiplier4,
+        Multiplier5,
+        Multiplier6,
+        Multiplier7,
+        Multiplier8,
+        Multiplier9,
+        Multiplier10,
+        Multiplier11,
+        Multiplier12,
+        Multiplier13,
+        Multiplier14,
+        Multiplier15;
 
-        int        func(m Multiplier) String()
-
-        string {
-            if m == 0 {
-                return "1/2"
+        @Override public String toString() {
+            if (ordinal() == 0) {
+                return "1/2";
             } else{
-                return fmt.Sprintf("%d", m)
+                return "%d".formatted(ordinal());
             }
         }
     }

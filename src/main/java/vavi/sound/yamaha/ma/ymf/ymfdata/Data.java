@@ -60,7 +60,7 @@ public class Data {
     // ModulatorMultiplier は、モジュレータの出力を他のオペレータに入力する際の増幅率です。
     public static final double ModulatorMultiplier = 4.0;
 
-    // ModulatorMatrix は、各 ALG でモジュレータとして使用されるオペレータを表すマトリクスです。
+    // ModulatorMatrix は、各 alg でモジュレータとして使用されるオペレータを表すマトリクスです。
     public static final boolean[][] ModulatorMatrix = {
             {true, false, false, false},
             {false, false, false, false},
@@ -72,7 +72,7 @@ public class Data {
             {false, true, false, false},
     };
 
-    // CarrierMatrix は、各 ALG でキャリアとして使用されるオペレータを表すマトリクスです。
+    // CarrierMatrix は、各 alg でキャリアとして使用されるオペレータを表すマトリクスです。
     public static final boolean[][] CarrierMatrix = {
             {false, true, false, false},
             {true, true, false, false},
@@ -247,7 +247,7 @@ public class Data {
             }
         }
 
-        // convert LFO frequency
+        // convert lfo frequency
         {
             double[] lfoFreqHz = {
                     1.8, 4.0, 5.9, 7.0

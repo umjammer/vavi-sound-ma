@@ -7,19 +7,21 @@ package vavi.sound.yamaha.smaf.voice;
 import java.io.DataInputStream;
 import java.io.IOException;
 
+import static vavi.sound.yamaha.smaf.util.TextUtil.hex;
+
 
 /**
  * <pre>
  *      | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
  *  + 0 |             Fs(H)             |
  *  + 1 |             Fs(L)             |
- *  + 2 |      PANPOT       |   ?   |P E|
- *  + 3 |  LFO  |           ?           |
- *  + 4 |      S R      |XOF|   |SUS|   |
+ *  + 2 |      panpot       |   ?   |P E|
+ *  + 3 |  lfo  |           ?           |
+ *  + 4 |      S R      |xof|   |sus|   |
  *  + 5 |      R R      |      D R      |
  *  + 6 |      A R      |      S L      |
  *  + 7 |          T L          |   ?   |
- *  + 8 | ? |  DAM  |EAM| ? |  DVB  |EVB|
+ *  + 8 | ? |  dam  |eam| ? |  dvb  |evb|
  *  + 9 |               ?               |
  *  +10 |               ?               |
  *  +11 |             LP(H)             |
@@ -32,22 +34,23 @@ import java.io.IOException;
  *  +18 |               ?               |
  * </pre>
  */
-class VM35PCMVoice implements VM35Voice {
+public class VM35PCMVoice implements VM35Voice {
 
     //`json:"raw_data"`
-    byte[] RawData = new byte[19];
+    byte[] rawData = new byte[19];
 
     @Override
-    public void Read(DataInputStream rdr, int[] rest) throws IOException {
-        rdr.readFully(this.RawData);
-        rest[0] -= this.RawData.length;
+    public void read(DataInputStream rdr, int[] rest) throws IOException {
+        rdr.readFully(this.rawData);
+        rest[0] -= this.rawData.length;
     }
 
     @Override
-    public void ReadUnusedRest(DataInputStream rdr, int[] rest) {
+    public void readUnusedRest(DataInputStream rdr, int[] rest) {
     }
 
+    @Override
     public String toString() {
-        return util.Hex(this.RawData);
+        return hex(this.rawData);
     }
 }

@@ -4,15 +4,23 @@
 
 package vavi.sound.yamaha.ma.cmd.cli.internal.player;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.stream.Stream;
+import javax.sound.midi.InvalidMidiDataException;
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiDevice.Info;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.MidiUnavailableException;
+import javax.sound.midi.Sequence;
 
 import vavi.sound.yamaha.ma.fmfm.Controller;
 import vavi.sound.yamaha.ma.fmfm.Controller.ControllerOpts;
 import vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage;
 
+import static java.lang.System.getLogger;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIControlChange;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOff;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOn;
@@ -20,73 +28,82 @@ import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIPitchBend;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIProgramChange;
 
 
-public class Sequencer {
+public class Sequencer implements AutoCloseable {
+
+    private static final Logger logger = getLogger(Sequencer.class.getName());
 
     static final String defaultMIDIDeviceName = "IAC YAMAHA Virtual MIDI Device 0";
 
     // Sequencer は、PortMIDI により MIDIメッセージを受信して Chip のレジスタをコントロールします。
     // TODO: rename
     Controller fmfm;
-    Stream input;
+    Sequence input;
 
-    var newSequencerOnce = sync.Once;
+    Sequencer() {}
 
     // NewSequencer は、新しい Sequencer を作成します。
-    Sequencer(String midiDevice, ControllerOpts opts) {
+    public Sequencer(String midiDevice, ControllerOpts opts) throws MidiUnavailableException, InvalidMidiDataException {
         if (midiDevice.equals("@")) {
             midiDevice = defaultMIDIDeviceName;
         }
 
-        newSequencerOnce.Do(() -> {
-            portmidi.Initialize();
-            if (portmidi.CountDevices() < 1) {
-                panic("no midi device");
-            }
-        });
-
-        portmidi.DeviceID selectedMIDIDeviceID;
+        Info /* portmidi.DeviceID */ selectedMIDIDeviceID = null;
 
         if (midiDevice.isEmpty()) {
             boolean found;
-            selectedMIDIDeviceID, found = portmidi.DefaultInputDeviceID();
-            if (!found) {
+            try {
+                selectedMIDIDeviceID = MidiSystem.getSynthesizer().getDeviceInfo();
+            } catch (MidiUnavailableException e) {
                 throw new IllegalStateException("No default MIDI device found");
             }
         } else {
             boolean found = false;
-            for (var i = 0; i < portmidi.CountDevices(); i++) {
-                var deviceID = portmidi.DeviceID(i);
-                var info = portmidi.GetDeviceInfo(deviceID);
-                if (info.IsInputAvailable && info.Name == midiDevice) {
-                    selectedMIDIDeviceID = deviceID;
-                    found = true;
-                    break;
+            Info[] infos = MidiSystem.getMidiDeviceInfo();
+            for (Info info : infos) {
+                MidiDevice device;
+                try {
+                    device = MidiSystem.getMidiDevice(info);
+                    if (device.getMaxTransmitters() == 0) {
+                        continue;
+                    }
+                    if (device.isOpen() && info.getName().equals(midiDevice)) {
+                        selectedMIDIDeviceID = device.getDeviceInfo();
+                        found = true;
+                        break;
+                    }
+                } catch (MidiUnavailableException e) {
+logger.log(Level.ERROR, e.getMessage(), e);
                 }
+            }
+
+            for (var info : infos) {
+                var deviceID = MidiSystem.getMidiDevice(info);
             }
             if (!found) {
                 throw new IllegalStateException("No such MIDI device found: " + midiDevice);
             }
         }
 
-        var info = portmidi.GetDeviceInfo(selectedMIDIDeviceID);
-        System.err.printf("MIDI device: %s > %s\n", info.Interface, info.Name);
+        var info = MidiSystem.getMidiDevice(selectedMIDIDeviceID);
+        System.err.printf("MIDI device: %s > %s\n", info.getReceivers(), info.getDeviceInfo().getName());
 
-        var input = portmidi.NewInputStream(selectedMIDIDeviceID, 512, 0);
+        var input = new Sequence(/* selectedMIDIDeviceID*/ Sequence.PPQ, 512, 1);
 
         var seq = new Sequencer() {{
-            Controller = new Controller(opts);
-            input = input;
+            fmfm = new Controller(opts);
+            this.input = input;
         }};
 
-        try (Executors.newSingleThreadExecutor().submit(() -> {
-            for (var e : this.input.Source()) {
-                if (e.Timestamp < 0) {
+        Executors.newSingleThreadExecutor().submit(() -> {
+            for (int i = 0; i < this.input.getTracks()[0].size(); i++) {
+                var e = this.input.getTracks()[0].get(i);
+                if (e.getTick() < 0) {
                     continue;
                 }
-                var msg = portmidi.Message(e.Message);
-                var status = (int) (msg.Status());
-                var channel = (int) (status & 15);
-                MIDIMessage typ;
+                var msg = e.getMessage();
+                var status = msg.getStatus();
+                var channel = status & 15;
+                MIDIMessage typ = null;
                 switch (status & 0xf0) {
                     case 0x90:
                         typ = MIDINoteOn;
@@ -99,25 +116,24 @@ public class Sequencer {
                     case 0xe0:
                         typ = MIDIPitchBend;
                 }
-                this.PushMIDIMessage(typ, (int) (e.Timestamp), channel, (int) (msg.Data1()), (int) (msg.Data2()));
+                seq.fmfm.PushMIDIMessage(typ, (int) (e.getTick()), channel, msg.getMessage()[0], msg.getMessage()[1]);
             }
-        })) {
-        }
+        });
     }
 
     // Close は、MIDIメッセージの受信を終了します。
-    void Close() {
-        this.input.Close();
+    @Override
+    public void close() {
     }
 
     // ListMIDIDeivces は、入力として選択可能なMIDIデバイスの一覧を取得します。
-    String[] ListMIDIDeivces() {
+    String[] ListMIDIDeivces() throws MidiUnavailableException {
         List<String> result = new ArrayList<>();
-        for (var i = 0; i < portmidi.CountDevices(); i++) {
-            var deviceID = portmidi.DeviceID(i);
-            var info = portmidi.GetDeviceInfo(deviceID);
-            if (info.IsInputAvailable && info.Name != "") {
-                result.add(info.Name);
+        Info[] infos = MidiSystem.getMidiDeviceInfo();
+        for (Info info : infos) {
+            var device = MidiSystem.getMidiDevice(info);
+            if (device.isOpen() && !info.getName().isEmpty()) {
+                result.add(info.getName());
             }
         }
         return result.toArray(String[]::new);

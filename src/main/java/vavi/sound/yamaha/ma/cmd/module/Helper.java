@@ -2,68 +2,45 @@
  * https://github.com/but80/fmfm.core
  */
 
-package main;
+package vavi.sound.yamaha.ma.cmd.module;
 
-/*
-static void _set_longlong_array(long long* p, long long offset, long long value) {
-	p[offset] = value;
-}
-static void _set_uchar_array(unsigned char* p, long long offset, unsigned char value) {
-	p[offset] = value;
-}
-*/
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Supplier;
 
-(
-        "sort"
-        )
 
-        []int collectInts(fn func(chan<-int)){
-found =map[int]
+public class Helper {
 
-struct {
-}{}
-ch =
+    static native void _set_longlong_array(long out[], int i, long v);
+    static native void _set_uchar_array(byte[] out, int i, byte v);
 
-make(chan int, 100)
-
-go func() {
-    fn(ch)
-    close(ch)
-}()
-        for(v =
-range ch){
-found[v]=
-
-struct {
-}{}
+    public static int[] collectInts(Supplier<List<Integer>> fn) {
+        var found = new HashMap<Integer, Object>();
+        var ch = fn.get();
+        for (var v : ch) {
+            found.put(v, new Object());
         }
 
-result =[]
-
-int {
-}
-	for(v =
-range found){
-result =
-
-append(result, v)
-	}
-            sort.
-
-Ints(result)
-	return result
-}
-
-long writeInts(out *long, a[]int) {
-    for (i, v = range a) {
-        C._set_longlong_array(out, long(i), long(v))
+        var result = new ArrayList<>(found.keySet());
+        Collections.sort(result);
+        return result.stream().mapToInt(Integer::intValue).toArray();
     }
-    return long(len(a))
-}
 
-long writeBytes(out *C.uchar, a[]byte) {
-    for (i, v = range a) {
-        C._set_uchar_array(out, long(i), C.uchar(v))
+    public static long writeInts(long[] out, int[] a) {
+        for (var i = 0; i < a.length; i++) {
+            var v = a[i];
+            _set_longlong_array(out, i, v);
+        }
+        return a.length;
     }
-    return long(len(a))
+
+    public static long writeBytes(byte[] out , byte[] a) {
+        for (var i = 0; i < a.length; i++) {
+            var v = a[i];
+            _set_uchar_array(out, i, v);
+        }
+        return a.length;
+    }
 }

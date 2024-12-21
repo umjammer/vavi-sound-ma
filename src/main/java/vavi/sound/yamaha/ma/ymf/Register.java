@@ -53,11 +53,11 @@ public class Register {
         BLOCK,
         // FNUM は、FNUM レジスタです。
         FNUM,
-        // ALG は、ALG レジスタです。
+        // alg は、alg レジスタです。
         ALG,
-        // LFO は、LFO レジスタです。
+        // lfo は、lfo レジスタです。
         LFO,
-        // PANPOT は、PANPOT レジスタです。
+        // panpot は、panpot レジスタです。
         PANPOT,
         // CHPAN は、CHPAN レジスタです。
         CHPAN,
@@ -67,13 +67,13 @@ public class Register {
         EXPRESSION,
         // VELOCITY は、VELOCITY レジスタです。
         VELOCITY,
-        // BO は、BO レジスタです。
+        // bo は、bo レジスタです。
         BO,
         // RESET は、RESET レジスタです。
         RESET
     }
 
-    // Registers は、音源チップのレジスタを抽象化したインタフェースです。
+    // registers は、音源チップのレジスタを抽象化したインタフェースです。
     interface Registers {
 
         // WriteOperator は、オペレータレジスタに値を書き込みます。

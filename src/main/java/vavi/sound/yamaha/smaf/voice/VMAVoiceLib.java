@@ -14,49 +14,50 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.System.getLogger;
+import static vavi.sound.yamaha.smaf.util.TextUtil.zeroPadSliceToString;
 
 
-class VMAVoiceLib {
+public class VMAVoiceLib implements VoiceLib {
 
     private static final Logger logger = getLogger(VMAVoiceLib.class.getName());
 
     //`json:"programs"`
-    List<VMAVoicePC> Programs = new ArrayList<>();
+    List<VMAVoicePC> programs = new ArrayList<>();
 
-    void Read(DataInputStream rdr, int[] rest) throws IOException {
+    void read(DataInputStream rdr, int[] rest) throws IOException {
         for (var pc = 0; pc < 128 && 0 < rest[0]; pc++) {
             var voice = new VMAVoicePC();
             var name = new byte[16];
             rdr.readFully(name);
             rest[0] -= name.length;
-            voice.Name = util.ZeroPadSliceToString(name);
-            this.Programs.add(voice);
+            voice.name = zeroPadSliceToString(name);
+            this.programs.add(voice);
         }
         for (var pc = 0; pc < 128 && 0 < rest[0]; pc++) {
-            var voice = this.Programs.get(pc);
-            voice.Read(rdr, rest);
-            this.Programs.add(voice);
+            var voice = this.programs.get(pc);
+            voice.read(rdr, rest);
+            this.programs.add(voice);
         }
     }
 
     @Override
     public String toString() {
-        return String.join("\n", this.Programs.stream().map(VMAVoicePC::toString).toArray(String[]::new));
+        return String.join("\n", this.programs.stream().map(VMAVoicePC::toString).toArray(String[]::new));
     }
 
     VMAVoiceLib(String file) throws IOException {
         try (var fh = new DataInputStream(Files.newInputStream(Path.of(file)))) {
 
-            chunkHeader hdr = new chunkHeader();
+            ChunkHeader hdr = new ChunkHeader();
             hdr.read(fh);
-            if (hdr.Signature != ('F' << 24 | 'M' << 16 | ' ' << 8 | ' ')) {
+            if (hdr.signature != ('F' << 24 | 'M' << 16 | ' ' << 8 | ' ')) {
                 throw new IllegalArgumentException("Header signature must be \"FM  \"");
             }
 
-            var total = hdr.Size + 8 /* sizeof(hdr) */;
-            int[] rest = new int[] {hdr.Size};
+            var total = hdr.size + 8 /* sizeof(hdr) */;
+            int[] rest = new int[] {hdr.size};
             try {
-                this.Read(fh, rest);
+                this.read(fh, rest);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "at 0x%X bytes".formatted(total - rest[0]));
             }

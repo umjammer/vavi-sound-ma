@@ -4,9 +4,6 @@
 
 package vavi.sound.yamaha.ma.sim;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,7 +13,7 @@ import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.SampleRate;
 class EnvelopeTest {
 
 	@Test
-	void TestEnvelopeGenerator() {
+	void testEnvelopeGenerator() {
 		var threshDB = -30.0;
 		var thresh = Math.pow(10.0, threshDB / 20.0);
 		var gen = new EnvelopeGenerator(SampleRate);
@@ -26,9 +23,9 @@ class EnvelopeTest {
 		var sr = 0;
 		var rr = 4;
 		var ksl = 0;
-		var result = new double[][];
+		var result = new double[2][16];
 		for (var ksr = 0; ksr < 2; ksr++) {
-			List<Double> r = new ArrayList<>();
+			double[] r = new double[16];
 			for (var ksn = 0; ksn < 16; ksn++) {
 				var fnum = (ksn & 1) * 256;
 				var block = ksn >> 1;
@@ -53,11 +50,11 @@ class EnvelopeTest {
 					}
 				}
 				i -= n;
-				var secPerDb = (double0(i) / SampleRate / (.0 - threshDB);
+				var secPerDb = (double) (i) / SampleRate / (.0 - threshDB);
 				var dbPerSec = 1.0 / secPerDb;
-				r.add(Math.floor(dbPerSec));
+				r[ksn] = Math.floor(dbPerSec);
 			}
-			result.add(r);
+			result[ksr] = r;
 		}
 
 		assertEquals(new double[][] {

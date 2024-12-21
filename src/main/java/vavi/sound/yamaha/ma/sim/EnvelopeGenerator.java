@@ -48,22 +48,16 @@ public class EnvelopeGenerator {
 
     void reset() {
         this.currentLevel = .0;
-        this.stage = stage.stageOff;
+        this.stage = Stage.stageOff;
     }
 
     void resetAll() {
         this.eam = false;
         this.dam = 0;
         this.sustainLevel = .0;
-        this.
-
-                setTotalLevel(63);
-        this.
-
-                setKeyScalingLevel(0, 0, 1, 0);
-        this.
-
-                reset();
+        this.setTotalLevel(63);
+        this.setKeyScalingLevel(0, 0, 1, 0);
+        this.reset();
     }
 
     public void setActualSustainLevel(int sl) {
@@ -190,9 +184,11 @@ public class EnvelopeGenerator {
         }
     }
 
-    // DR/SR/RR=4 における共通の減衰速度 [振幅dB/sec]
-    // ・使用時は2で割ってエネルギーdBに変換
-    // ・DR/SR/RR が1増えると速度は2倍になる
+    /**
+     * DR/SR/RR=4 における共通の減衰速度 [振幅dB/sec]
+     * ・使用時は2で割ってエネルギーdBに変換
+     * ・DR/SR/RR が1増えると速度は2倍になる
+     */
     static final double[][] decayDBPerSecAt4 = {
             // 添字は keyScaleNumber (0..15)
             {17.9342, 17.9342, 17.9342, 17.9342, 17.9342, 22.4116, 22.4116, 22.4116, 22.4116, 26.9076, 26.9076, 26.9076, 26.9076, 31.3661, 31.3661, 31.3661},      // KSR=0
