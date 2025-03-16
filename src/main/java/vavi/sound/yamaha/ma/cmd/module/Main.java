@@ -5,18 +5,18 @@
 package vavi.sound.yamaha.ma.cmd.module;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import vavi.sound.yamaha.ma.fmfm.Controller;
 import vavi.sound.yamaha.ma.fmfm.Controller.ControllerOpts;
 import vavi.sound.yamaha.ma.sim.Chip;
 import vavi.sound.yamaha.ma.sim.Registers;
 import vavi.sound.yamaha.smaf.pb.smaf.Smaf.VM35VoicePC;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VM5VoiceLib;
+import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
 
 import static vavi.sound.yamaha.ma.cmd.module.Helper.collectInts;
 import static vavi.sound.yamaha.ma.cmd.module.Helper.writeBytes;
@@ -34,7 +34,7 @@ public class Main {
     Chip chip;
     Controller ctrl;
 
-    // FMFMLoadLibrary は、ライブラリをロードします。
+    // FMFMLoadLibrary loads a library.
     //export FMFMLoadLibrary
     int FMFMLoadLibrary(String voicePath) throws IOException {
         var voicePathGo = Path.of(voicePath);
@@ -42,123 +42,126 @@ public class Main {
             AtomicInteger i = new AtomicInteger();
 			s.forEach(p -> {
 				if (!Files.isDirectory(p) && p.getFileName().toString().endsWith(".vm5.pb")) {
-					lib.LoadFile(voicePathGo.resolve(p.getFileName()).toString());
-				}
+                    try {
+                        lib.LoadFile(voicePathGo.resolve(p.getFileName()).toString());
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }
 			});
         }
         return 1;
     }
 
-    // FMFMInit は、音源を初期化します。
+    // FMFMInit initializes the sound source.
     int FMFMInit(double sampleRate) {
         AtomicInteger result = new AtomicInteger();
         Executors.newSingleThreadExecutor().submit(() -> {
             var chip = new Chip((int) sampleRate, -15.0, -1);
             var regs = new Registers(chip);
-            var opts = new ControllerOpts() {{
-                registers = regs;
-                library = Main.this.lib;
-            }};
+            var opts = new ControllerOpts();
+            opts.registers = regs;
+            opts.library = Main.this.lib;
             ctrl = new Controller(opts);
             result.set(1);
         });
         return result.get();
     }
 
-    // FMFMFlushMIDIMessages は、蓄積されたMIDIメッセージを処理します。
+    // FMFMFlushMIDIMessages processes accumulated MIDI messages.
     void FMFMFlushMIDIMessages(long until) {
         ctrl.FlushMIDIMessages((int) (until));
     }
 
-    // FMFMNoteOn は、MIDIノートオン受信時の音源の振る舞いを再現します。
+    // FMFMNoteOn reproduces the behavior of a sound source when receiving a MIDI note-on.
     void FMFMNoteOn(long timestamp, long ch, long note, long velocity) {
         ctrl.PushMIDIMessage(MIDINoteOn, (int) timestamp, (int) ch, (int) note, (int) velocity);
     }
 
-    // FMFMNoteOff は、MIDIノートオフ受信時の音源の振る舞いを再現します。
+    // FMFMNoteOff reproduces the behavior of a sound source when receiving a MIDI note-off signal.
     void FMFMNoteOff(long timestamp, long ch, long note) {
         ctrl.PushMIDIMessage(MIDINoteOff, (int) timestamp, (int) ch, (int) note, 0);
     }
 
-    // FMFMControlChange は、MIDIコントロールチェンジ受信時の音源の振る舞いを再現します。
+    // FMFMControlChange reproduces the behavior of a sound source when receiving a MIDI control change.
     void FMFMControlChange(long timestamp, long ch, long cc, long value) {
         ctrl.PushMIDIMessage(MIDIControlChange, (int) timestamp, (int) ch, (int) cc, (int) value);
     }
 
-    // FMFMProgramChange は、MIDIプログラムチェンジ受信時の音源の振る舞いを再現します。
+    // FMFMProgramChange reproduces the behavior of a sound source when receiving a MIDI Program Change.
     void FMFMProgramChange(long timestamp, long ch, long value) {
         ctrl.PushMIDIMessage(MIDIProgramChange, (int) timestamp, (int) ch, (int) value, 0);
     }
 
-    // FMFMPitchBend は、MIDIピッチベンド受信時の音源の振る舞いを再現します。
+    // FMFMPitchBend reproduces the behavior of a sound source when receiving MIDI pitch bend.
     void FMFMPitchBend(long timestamp, long ch, long l, long h) {
         ctrl.PushMIDIMessage(MIDIPitchBend, (int) timestamp, (int) ch, (int) l, (int) h);
     }
 
-    // FMFMListBankMSB は、登録されている音色の選択可能なMSBの一覧を返します。
+    // FMFMListBankMSB returns a list of selectable MSBs for the registered tones.
     public long FMFMListBankMSB(long[] out) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
-            for (var p : lib.Programs) {
-                ch.add(p.BankMsb);
+            for (var p : lib.programs) {
+                ch.add(p.bankMSB);
             }
             return ch;
         }));
     }
 
-    // FMFMListBankLSB は、登録されている音色の選択可能なLSBの一覧を返します。
+    // FMFMListBankLSB returns a list of selectable LSBs for the registered tones.
     public long FMFMListBankLSB(long[] out, long msb) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
-            for (var p : lib.Programs) {
-                if (p.BankMsb == msb) {
-                    ch.add(p.BankLsb);
+            for (var p : lib.programs) {
+                if (p.bankMSB == msb) {
+                    ch.add(p.bankLSB);
                 }
             }
             return ch;
         }));
     }
 
-    // FMFMListPC は、登録されている音色の選択可能なプログラムチェンジの一覧を返します。
+    // FMFMListPC returns a list of selectable program changes for the registered tones.
     long FMFMListPC(long[] out, long msb, long lsb) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
-            for (var p : lib.Programs) {
-                if (p.BankMsb == (int) (msb) && p.BankLsb == (int) (lsb)) {
-                    ch.add(p.Pc);
+            for (var p : lib.programs) {
+                if (p.bankMSB == msb && p.bankLSB == lsb) {
+                    ch.add(p.pc);
                 }
             }
             return ch;
         }));
     }
 
-    // FMFMListDrumNote は、登録されている音色の選択可能なドラムノートの一覧を返します。
+    // FMFMListDrumNote returns a list of selectable drum notes for the registered sounds.
     long FMFMListDrumNote(long[] out, long msb, long lsb, long pc) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
-            for (var p : lib.Programs) {
-                if (p.BankMsb == (int) (msb) && p.BankLsb == (int) (lsb) && p.Pc == (int) (pc)) {
-                    ch.add(p.DrumNote);
+            for (var p : lib.programs) {
+                if (p.bankMSB == msb && p.bankLSB == lsb && p.pc == pc) {
+                    ch.add(p.drumNote.ordinal());
                 }
             }
             return ch;
         }));
     }
 
-    // FMFMGetVoice は、音色データを Protocol Buffers 形式にエンコードして返します。
+    // FMFMGetVoice returns voice data encoded in Protocol Buffers format.
     long FMFMGetVoice(byte[] out, long msb, long lsb, long pc, long drumNote) {
         // TODO: implement
-        for (var p : lib.Programs) {
+        for (var p : lib.programs) {
             var ch = new ArrayList<Integer>();
-            if (p.BankMsb == (int) (msb) && p.BankLsb == (int) (lsb) && p.Pc == (int) (pc)) {
-                var data = VM35VoicePC.newBuilder(p).build();
+            if (p.bankMSB == msb && p.bankLSB == lsb && p.pc == pc) {
+                var data = VM35VoicePC.getDefaultInstance().toByteArray();
                 return writeBytes(out, data);
             }
         }
         return 0;
     }
 
-    // FMFMNext は、次のサンプルを生成・取得します。
+    // FMFMNext generates and retrieves the next sample.
     double[] FMFMNext() {
         return chip.next();
     }

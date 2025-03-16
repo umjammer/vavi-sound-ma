@@ -153,7 +153,7 @@ class Operator {
     }
 
     void setKSR(int v) {
-        // TODO: BOの影響は受けるのか？
+        // TODO: Will it be affected by BO?
         this.ksr = v;
         this.updateEnvelope();
     }
@@ -165,7 +165,7 @@ class Operator {
 
     void setKSL(
             int v) {
-        // TODO: BOの影響は受けるのか？
+        // TODO: Will it be affected by BO?
         this.ksl = v;
         this.envelopeGenerator.setKeyScalingLevel(this.fnum, this.block, this.bo, this.ksl);
     }
@@ -239,7 +239,7 @@ class Operator {
 
     void setFrequency(int fnum, int blk, int bo) {
         this.keyScaleNumber = (blk + 1 - bo) * 2 + (fnum >> 9);
-        // TODO: BOの影響は受けるのか？
+        // TODO: Will it be affected by BO?
         if (this.keyScaleNumber < 0) {
             this.keyScaleNumber = 0;
         } else if (15 < this.keyScaleNumber) {

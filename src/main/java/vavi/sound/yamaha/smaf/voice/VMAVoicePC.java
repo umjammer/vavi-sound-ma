@@ -9,8 +9,11 @@ import java.io.IOException;
 
 import vavi.sound.yamaha.smaf.enums.Enums.VoiceType;
 import vavi.sound.yamaha.smaf.enums.Note;
+import vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion;
 
 import static vavi.sound.yamaha.smaf.util.TextUtil.indent;
+import static vavi.sound.yamaha.smaf.voice.VM35Voice.normalizeString;
+import static vavi.sound.yamaha.smaf.voice.VM35Voice.normalizeint;
 
 
 public class VMAVoicePC {
@@ -77,5 +80,52 @@ public class VMAVoicePC {
             voiceType = VoiceType.VoiceType_FM;
             voice = VMAVoicePC.this.voice.ToVM35();
         }};
+    }
+
+    // Normalize removes outliers from the timbre data and normalizes it.
+    // Returns true if the tone was normal to begin with.
+    boolean normalize() {
+        var ok = new boolean[] {true};
+
+        VM35VoicePC voice = this.toVM35();
+        if (VM35FMVoiceVersion.values().length < voice.version.ordinal()) {
+            voice.version = VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
+            ok[0] = false;
+        }
+        voice.name = normalizeString(ok, voice.name, "(undefined)");
+        voice.bankMSB = normalizeint(ok, voice.bankMSB, 0, 127);
+        voice.bankLSB = normalizeint(ok, voice.bankLSB, 0, 127);
+        voice.pc = normalizeint(ok, voice.pc, 0, 127);
+        voice.drumNote = Note.values()[normalizeint(ok, voice.drumNote.ordinal(), 0, 127)];
+        if (VoiceType.values().length < voice.voiceType.ordinal()) {
+            voice.voiceType = VoiceType.VoiceType_FM;
+            ok[0] = false;
+        }
+        switch (voice.voiceType) {
+            case VoiceType_FM:
+                if (voice.voice == null) {
+                    voice.voice = new VM35FMVoice();
+                    ok[0] = false;
+                }
+                if (!((VM35FMVoice) voice.voice).normalize()) {
+                    ok[0] = false;
+                }
+                break;
+            case VoiceType_PCM:
+                if (voice.voice == null) {
+                    voice.voice = new VM35PCMVoice();
+                    ok[0] = false;
+                }
+                if (!((VM35PCMVoice) voice.voice).normalize()) {
+                    ok[0] = false;
+                }
+                break;
+            case VoiceType_AL:
+                voice.voiceType = VoiceType.VoiceType_FM;
+                voice.voice = new VM35FMVoice();
+                ok[0] = false;
+                break;
+        }
+        return ok[0];
     }
 }

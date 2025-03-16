@@ -10,17 +10,17 @@ import vavi.sound.yamaha.ma.ymf.Register.OpRegister;
 import static vavi.sound.yamaha.ma.ymf.Register.OpRegister.TL;
 
 
-/** registers は、全レジスタのコンテナです。 */
+/** registers is a container for all registers. */
 public class Registers {
 
     Chip chip;
 
-    /** NewRegisters は、新しい registers を作成します。 */
+    /** NewRegisters creates new registers. */
     public Registers(Chip chip) {
         this.chip = chip;
     }
 
-    /** WriteOperator は、オペレータレジスタに値を書き込みます。 */
+    /** WriteOperator writes a value to an operator register. */
     public synchronized void writeOperator(int channel, int operatorIndex, OpRegister offset, int v) {
         switch (offset) {
             case EAM:
@@ -60,7 +60,7 @@ public class Registers {
         }
     }
 
-    /** WriteTL は、TLレジスタに値を書き込みます。 */
+    /** WriteTL writes a value to the TL register. */
     synchronized void writeTL(int channel, int operatorIndex, int tlCarrier, int tlModulator) {
         if (this.chip.channels[channel].operators[operatorIndex].isModulator) {
             this.writeOperator(channel, operatorIndex, TL, tlModulator);
@@ -69,12 +69,12 @@ public class Registers {
         }
     }
 
-    /** DebugSetMIDIChannel は、チャンネルを使用しているMIDIチャンネル番号をデバッグ用にセットします。 */
+    /** DebugSetMIDIChannel sets the MIDI channel number used for debugging purposes. */
     public synchronized void debugSetMIDIChannel(int channel, int midiChannel) {
         this.chip.channels[channel].midiChannelID = midiChannel;
     }
 
-    /** WriteChannel は、チャンネルレジスタに値を書き込みます。 */
+    /** WriteChannel writes a value to a channel register. */
     public synchronized void writeChannel(int channel, ChRegister offset, int v) {
         switch (offset) {
             case KON:

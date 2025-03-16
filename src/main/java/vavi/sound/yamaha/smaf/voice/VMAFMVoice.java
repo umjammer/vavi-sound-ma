@@ -27,7 +27,7 @@ import static vavi.sound.yamaha.smaf.util.TextUtil.indent;
 
 public class VMAFMVoice implements VM35Voice {
 
-    static class VMAFMOperator {
+    public static class VMAFMOperator {
 
         /** Operator number */
         //`json:"-"`
@@ -274,11 +274,11 @@ public class VMAFMVoice implements VM35Voice {
             lfo = VMAFMVoice.this.lfo;
             pe = false;
             alg = VMAFMVoice.this.alg;
-            operators = new VM35FMOperator[4];
+            operators = new ArrayList<>(4);
         }};
         var fb = this.fb;
         for (var op = 0; op < 4; op++) {
-            result.operators[op] = this.operators[op].ToVM35(fb);
+            result.operators.set(op, this.operators[op].ToVM35(fb));
             fb = 0;
         }
         return result;

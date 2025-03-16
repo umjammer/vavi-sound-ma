@@ -7,85 +7,85 @@ package vavi.sound.yamaha.ma.ymf;
 
 public class Register {
 
-    // OpRegister は、オペレータパラメータを保持するレジスタの種類を表す型です。
+    // OpRegister is a type that represents the kind of register that holds operator parameters.
     public enum OpRegister {
-        // EAM は、EAM レジスタです。
+        // EAM is the EAM register.
         EAM,
-        // EVB は、EVB レジスタです。
+        // EVB is the EVB register.
         EVB,
-        // DAM は、DAM レジスタです。
+        // DAM is the DAM register.
         DAM,
-        // DVB は、DVB レジスタです。
+        // DVB is the DVB register.
         DVB,
-        // DT は、DT レジスタです。
+        // DT is the DT register.
         DT,
-        // KSL は、KSL レジスタです。
+        // KSL is the KSL register.
         KSL,
-        // KSR は、KSR レジスタです。
+        // KSR is the KSR register.
         KSR,
-        // WS は、WS レジスタです。
+        // WS is the WS register.
         WS,
-        // MULT は、MULT レジスタです。
+        // MULT is the MULT register.
         MULT,
-        // FB は、FB レジスタです。
+        // FB is the FB register.
         FB,
-        // AR は、AR レジスタです。
+        // AR is the AR register.
         AR,
-        // DR は、DR レジスタです。
+        // DR is the DR register.
         DR,
-        // SL は、SL レジスタです。
+        // SL is the SL register.
         SL,
-        // SR は、SR レジスタです。
+        // SR is the SR register.
         SR,
-        // RR は、RR レジスタです。
+        // RR is the RR register.
         RR,
-        // TL は、TL レジスタです。
+        // TL is the TL register.
         TL,
-        // XOF は、XOF レジスタです。
+        // XOF is the XOF register.
         XOF
     }
 
-    // ChRegister は、チャンネルパラメータを保持するレジスタの種類を表す型です。
+    // ChRegister is a type that represents the type of register that holds channel parameters.
     public enum ChRegister {
-        // KON は、KON レジスタです。
+        // KON is the KON register.
         KON,
-        // BLOCK は、BLOCK レジスタです。
+        // BLOCK is the BLOCK register.
         BLOCK,
-        // FNUM は、FNUM レジスタです。
+        // FNUM is the FNUM register.
         FNUM,
-        // alg は、alg レジスタです。
+        // alg is the alg register.
         ALG,
-        // lfo は、lfo レジスタです。
+        // lfo is the lfo register.
         LFO,
-        // panpot は、panpot レジスタです。
+        // panpot is the panpot register.
         PANPOT,
-        // CHPAN は、CHPAN レジスタです。
+        // CHPAN is the CHPAN register.
         CHPAN,
-        // VOLUME は、VOLUME レジスタです。
+        // VOLUME is the VOLUME register.
         VOLUME,
-        // EXPRESSION は、EXPRESSION レジスタです。
+        // EXPRESSION is the EXPRESSION register.
         EXPRESSION,
-        // VELOCITY は、VELOCITY レジスタです。
+        // VELOCITY is the VELOCITY register.
         VELOCITY,
-        // bo は、bo レジスタです。
+        // bo is the bo register.
         BO,
-        // RESET は、RESET レジスタです。
+        // RESET is the RESET register.
         RESET
     }
 
-    // registers は、音源チップのレジスタを抽象化したインタフェースです。
+    // registers is an interface that abstracts the registers of the sound chip.
     interface Registers {
 
-        // WriteOperator は、オペレータレジスタに値を書き込みます。
+        // WriteOperator writes a value to an operator register.
         void writeOperator(int channel, int operatorIndex, OpRegister offset, int v);
 
-        // WriteTL は、TLレジスタに値を書き込みます。
+        // WriteTL writes a value to the TL register.
         void writeTL(int channel, int operatorIndex, int tlCarrier, int tlModulator);
 
-        // WriteChannel は、チャンネルレジスタに値を書き込みます。
+        // WriteChannel writes a value to a channel register.
         void writeChannel(int channel, ChRegister offset, int v);
 
-        // DebugSetMIDIChannel は、チャンネルを使用しているMIDIチャンネル番号をデバッグ用にセットします。
+        // DebugSetMIDIChannel sets the MIDI channel number used for debugging purposes.
         void debugSetMIDIChannel(int channel, int midiChannel);
     }
 }

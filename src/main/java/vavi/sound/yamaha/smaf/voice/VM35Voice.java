@@ -29,4 +29,26 @@ public interface VM35Voice {
     void read(DataInputStream rdr, int[] rest) throws IOException;
 
     void readUnusedRest(DataInputStream rdr, int[] rest) throws IOException;
+
+    static int normalizeint(boolean[] ok, int target, int min, int max) {
+        int result = target;
+        if (target < min) {
+            result = min;
+            ok[0] = false;
+        }
+        if (max < target) {
+            result = max;
+            ok[0] = false;
+        }
+        return result;
+    }
+
+    static String normalizeString(boolean[] ok, String target, String def) {
+        String result = target;
+        if (target.isEmpty()) {
+            result = def;
+            ok[0] = false;
+        }
+        return result;
+    }
 }

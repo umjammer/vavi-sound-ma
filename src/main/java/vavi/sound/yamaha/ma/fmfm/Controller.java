@@ -10,16 +10,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import vavi.sound.yamaha.ma.sim.Registers;
 import vavi.sound.yamaha.ma.ymf.Register.ChRegister;
 import vavi.sound.yamaha.ma.ymf.Register.OpRegister;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35FMVoice;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35FMVoiceVersion;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35VoicePC;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VM35FMOperator;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VM5VoiceLib;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VoiceType;
+import vavi.sound.yamaha.smaf.enums.Enums.Algorithm;
+import vavi.sound.yamaha.smaf.enums.Enums.BasicOctave;
+import vavi.sound.yamaha.smaf.enums.Enums.Multiplier;
+import vavi.sound.yamaha.smaf.enums.Enums.Panpot;
+import vavi.sound.yamaha.smaf.enums.Enums.VoiceType;
+import vavi.sound.yamaha.smaf.voice.VM35FMVoice;
+import vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion;
+import vavi.sound.yamaha.smaf.voice.VM35VoicePC;
+import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
 
 import static vavi.sound.yamaha.ma.ymf.Register.ChRegister.ALG;
 import static vavi.sound.yamaha.ma.ymf.Register.ChRegister.BLOCK;
@@ -63,47 +65,50 @@ public class Controller {
 
     VM35VoicePC defaultPC;
 
-    Controller() {
+    public Controller() {
         defaultPC = new VM35VoicePC();
-        defaultPC.Version = VM35FMVoiceVersion.values()[VM35FMVoiceVersion_VM5.ordinal()];
-        defaultPC.Name = "default";
-        defaultPC.VoiceType = VoiceType.values()[VoiceType_FM.ordinal()];
-        defaultPC.FmVoice = new VM35FMVoice();
-        defaultPC.FmVoice.Panpot = 15;
-        defaultPC.FmVoice.Bo = 1;
-        defaultPC.FmVoice.Alg = 0;
-        defaultPC.FmVoice.Lfo = 2;
-        defaultPC.FmVoice.Operators = List.of(
+        defaultPC.version = VM35FMVoiceVersion.values()[VM35FMVoiceVersion_VM5.ordinal()];
+        defaultPC.name = "default";
+        defaultPC.voiceType = VoiceType.values()[VoiceType_FM.ordinal()];
+        defaultPC.voice = new VM35FMVoice() {{
+            this.panpot = Panpot.Panpot15;
+            this.bo = BasicOctave.BasicOctave_Normal;
+            this.alg = Algorithm.A0;
+            this.lfo = 2;
+            this.operators = List.of(
+                    new VM35FMVoice.VM35FMOperator() {{
+                            multi = Multiplier.Multiplier1;
+                            ar = 15;
+                            dr = 4;
+                            sl = 15;
+                            rr = 12;
+                            tl = 12;
+                            ksl = 2;
+                            dvb = 3;
+                        }
+                    },
                     new VM35FMOperator() {{
-                        Multi = 1;
-                        Ar = 15;
-                        Dr = 4;
-                        Sl = 15;
-                        Rr = 12;
-                        Tl = 12;
-                        Ksl = 2;
-                        Dvb = 3;
-                    }},
-                    new VM35FMOperator() {{
-                        Multi = 1;
-                        Ar = 15;
-                        Rr = 12;
-                        Dvb = 3;
-                    }}
+                        multi = Multiplier.Multiplier1;
+                            ar = 15;
+                            rr = 12;
+                            dvb = 3;
+                        }
+                    }
             );
+        }};
     }
 
-    // MIDIMessage は、MIDIメッセージの種類を表す列挙子型です。
+    // MIDIMessage is an enumeration type that represents a type of MIDI message.
     public enum MIDIMessage {
-        // MIDINoteOn は、MIDIメッセージの種類 NoteOn を表す列挙子です。
+        // MIDINoteOn is an enumerator that represents the MIDI message type NoteOn.
         MIDINoteOn(1),
-        // MIDINoteOff は、MIDIメッセージの種類 NoteOff を表す列挙子です。
+        // MIDINoteOff is an enumerator that represents the MIDI message type NoteOff.
         MIDINoteOff(2),
-        // MIDIControlChange は、MIDIメッセージの種類 ControlChange を表す列挙子です。
+        // MIDIControlChange is an enumerator that represents the MIDI message type ControlChange.
         MIDIControlChange(3),
-        // MIDIProgramChange は、MIDIメッセージの種類 ProgramChange を表す列挙子です。
+        // MIDIProgramChange is an enumerator that represents the MIDI message type ProgramChange.
         MIDIProgramChange(4),
-        // MIDIPitchBend は、MIDIメッセージの種類 PitchBend を表す列挙子です。
+        // MIDIPitchBend is an enumerator that represents the MIDI message type PitchBend.
         MIDIPitchBend(5);
         final int v;
 
@@ -182,11 +187,11 @@ public class Controller {
         VM35VoicePC debugLastInstrument;
     }
 
-    // ControllerOpts は、 NewController のオプションです。
+    // ControllerOpts are the options for NewController .
     public static class ControllerOpts {
 
-        protected Registers registers;
-        protected VM5VoiceLib library;
+        public Registers registers;
+        public VM5VoiceLib library;
         protected boolean muteIfPCNotFound;
         protected boolean forceMono;
         protected boolean printStatus;
@@ -194,7 +199,7 @@ public class Controller {
         protected int soloMIDIChannel;
     }
 
-    // Controller は、MIDIに類似するインタフェースで Chip のレジスタをコントロールします。
+    // The Controller controls the Chip's registers via a MIDI-like interface.
     Object mutex;
     Registers registers;
     VM5VoiceLib library;
@@ -208,7 +213,7 @@ public class Controller {
     midiChannelState[] midiChannelStates = new midiChannelState[16];
     chipChannelState[] chipChannelStates = new chipChannelState[ChannelCount];
 
-    // NewController は、新しい Controller を作成します。
+    // NewController creates a new Controller.
     public Controller(ControllerOpts opts) {
         this.registers = opts.registers;
         this.library = opts.library;
@@ -231,7 +236,7 @@ public class Controller {
         this.Reset();
     }
 
-    // PushMIDIMessage は、処理すべきMIDIメッセージを追加します。
+    // PushMIDIMessage adds a MIDI message for processing.
     public synchronized void PushMIDIMessage(MIDIMessage typ, int timestamp, int midich, int data1, int data2) {
 
         var msg = new midiMessage() {{
@@ -259,7 +264,7 @@ public class Controller {
 
     Instant lastPrintedAt = Instant.now();
 
-    // FlushMIDIMessages は、蓄積されたMIDIメッセージを処理します。
+    // FlushMIDIMessages processes any accumulated MIDI messages.
     public synchronized void FlushMIDIMessages(int until) {
 
         List<midiMessage> rest = List.of();
@@ -337,7 +342,7 @@ public class Controller {
             System.out.printf("%2d %s %-16s %s %3d %3d %3d %2d %-4s\n",
                     i + 1,
                     pc,
-                    instr.Name,
+                    instr.name,
                     monopoly,
                     ms.volume,
                     ms.expression,
@@ -348,7 +353,7 @@ public class Controller {
         }
     }
 
-    // noteOn は、MIDIノートオン受信時の音源の振る舞いを再現します。
+    // noteOn reproduces the behavior of a sound source when receiving a MIDI note-on.
     void noteOn(int midich, int note, int velocity) {
         if (velocity == 0) {
             this.noteOff(midich, note);
@@ -360,13 +365,13 @@ public class Controller {
 
         var instr = this.getInstrument(midich, note);
 
-        if (instr.VoiceType.ordinal() != VoiceType_FM.ordinal()) {
-            System.out.printf("unsupported voice type: @%d-%d-%d note=%d type=%s\n", instr.BankMsb, instr.BankLsb, instr.Pc, note, instr.VoiceType);
+        if (instr.voiceType.ordinal() != VoiceType_FM.ordinal()) {
+            System.out.printf("unsupported voice type: @%d-%d-%d note=%d type=%s\n", instr.bankMSB, instr.bankLSB, instr.pc, note, instr.voiceType);
             return;
         }
 
         var chipch = -1;
-        if (this.midiChannelStates[midich].mono || this.forceMono && instr.DrumNote == 0) {
+        if (this.midiChannelStates[midich].mono || this.forceMono && instr.drumNote == null) {
             chipch = this.findLastUsedChipChannel(midich, note);
         }
         if (chipch < 0) {
@@ -379,7 +384,7 @@ public class Controller {
         }
     }
 
-    // noteOff は、MIDIノートオフ受信時の音源の振る舞いを再現します。
+    // noteOff reproduces the behavior of a sound source when receiving a MIDI note-off.
     void noteOff(int midich, int note) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -398,7 +403,7 @@ public class Controller {
         }
     }
 
-    // controlChange は、MIDIコントロールチェンジ受信時の音源の振る舞いを再現します。
+    // controlChange reproduces the behavior of a sound source when receiving a MIDI control change.
     void controlChange(int midich, int cc, int value) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -497,7 +502,7 @@ public class Controller {
         }
     }
 
-    // programChange は、MIDIプログラムチェンジ受信時の音源の振る舞いを再現します。
+    // programChange reproduces the behavior of a sound source when receiving a MIDI program change.
     void programChange(int midich, int pc) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -505,7 +510,7 @@ public class Controller {
         this.midiChannelStates[midich].pc = (byte) (pc);
     }
 
-    // pitchBend は、MIDIピッチベンド受信時の音源の振る舞いを再現します。
+    // pitchBend reproduces the behavior of a sound source when receiving MIDI pitch bend.
     void pitchBend(int midich, int l, int h) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -523,7 +528,7 @@ public class Controller {
         }
     }
 
-    // Reset は、音源の状態をリセットします。
+    // Reset resets the state of the sound source.
     synchronized void Reset() {
         for (var i = 0; i < this.chipChannelStates.length; i++) {
             this.resetChipChannel(i);
@@ -534,10 +539,10 @@ public class Controller {
     }
 
     void writeModulation(int chipch, VM35VoicePC instr, boolean state) {
-        // TODO: モジュレータではevbだけを見る(stateは無視)？
-        for (var i = 0; i < instr.FmVoice.Operators.size(); i++) {
-            var o = instr.FmVoice.Operators.get(i);
-            this.registers.writeOperator(chipch, i, EVB, boolean2int(o.Evb || state));
+        // TODO: Does the modulator only look at evb (ignoring state)?
+        for (var i = 0; i < ((VM35FMVoice) instr.voice).operators.size(); i++) {
+            var o = ((VM35FMVoice) instr.voice).operators.get(i);
+            this.registers.writeOperator(chipch, i, EVB, boolean2int(o.evb || state));
         }
     }
 
@@ -553,8 +558,8 @@ public class Controller {
         chipState.time = Instant.now();
 
         chipState.finetune = 0;
-        if (instr.DrumNote != 0) {
-            note = (int) (instr.FmVoice.DrumKey);
+        if (instr.drumNote != null) {
+            note = (int) (((VM35FMVoice) instr.voice).drumKey.ordinal());
         }
         chipState.pitch = chipState.finetune + (int) (midiState.pitch);
         chipState.instrument = instr;
@@ -562,11 +567,11 @@ public class Controller {
         chipState.realnote = note;
 
         chipState.minRR = 15;
-        for (var i = 0; i < instr.FmVoice.Operators.size(); i++) {
-            var op = instr.FmVoice.Operators.get(i);
-            var isCarrier = CarrierMatrix[instr.FmVoice.Alg][i];
-            if (isCarrier && (int) (op.Rr) < chipState.minRR) {
-                chipState.minRR = (int) (op.Rr);
+        for (var i = 0; i < ((VM35FMVoice) instr.voice).operators.size(); i++) {
+            var op = ((VM35FMVoice) instr.voice).operators.get(i);
+            var isCarrier = CarrierMatrix[((VM35FMVoice) instr.voice).alg.ordinal()][i];
+            if (isCarrier && op.rr < chipState.minRR) {
+                chipState.minRR = op.rr;
             }
         }
 
@@ -607,8 +612,8 @@ public class Controller {
         }
     }
 
-    // findLastUsedChipChannel は、指定MIDIチャンネルの指定ノートを発音するとき、
-    // MONOモード時に収容先となるチップのチャンネルを選択します。
+    // findLastUsedChipChannel selects the channel of the chip to which the specified note
+    // on the specified MIDI channel will be assigned in MONO mode.
     int findLastUsedChipChannel(int midich, int note) {
         var now = Instant.now();
         var found = -1;
@@ -633,17 +638,17 @@ public class Controller {
         return -1;
     }
 
-    // findLastUsedChipChannel は、指定MIDIチャンネルの指定ノートを発音するとき、
-    // POLYモード時に収容先となるチップのチャンネルを選択します。
+    // findLastUsedChipChannel selects the channel of the chip to which a specified note
+    // on a specified MIDI channel will be assigned in POLY mode.
     int findFreeChipChannel(int midich, int note) {
-        // // 同じノートで発音済みのチャンネルがあれば最優先で選択
-        // for i, state := range this.chipChannelStates {
-        // 	if state.midiChannel == midich && state.note == note {
-        // 		return i
-        // 	}
-        // }
+//        // If there is a channel with the same note already played, it will be selected with the highest priority.
+//        for (i, state : this.chipChannelStates) {
+//            if state.midiChannel == midich && state.note == note {
+//                return i
+//            }
+//        }
 
-        // 無音のチャンネルがあれば選択
+        // Select a silent channel if there is one
         for (var i = 0; i < this.chipChannelStates.length; i++) {
             var state = this.chipChannelStates[i];
             if ((state.flags & flagFree) != 0) {
@@ -671,18 +676,18 @@ public class Controller {
             }
         }
 
-        // リリース後に最も減衰していると思われるチャンネルを選択
+        // Select the channel that is most likely to be attenuated after release
         if (0 <= foundReleased) {
             this.resetChipChannel(foundReleased);
             return foundReleased;
         }
-        // 未リリースだが最も古くなったと思われるチャンネルを選択
+        // Select the channel that is unreleased but is considered the oldest.
         if (0 <= foundTotal) {
             this.resetChipChannel(foundTotal);
             return foundTotal;
         }
 
-        // 収容先がない
+        // No place to accommodate
         return -1;
     }
 
@@ -775,30 +780,30 @@ public class Controller {
     void writeInstrument(int chipch, VM35VoicePC instr) {
         this.writeAllOperators(chipch, TL, 0x3f); // no volume
 
-        for (var i = 0; i < instr.FmVoice.Operators.size(); i++) {
-            var op = instr.FmVoice.Operators.get(i);
-            this.registers.writeOperator(chipch, i, EAM, boolean2int(op.Eam));
-            this.registers.writeOperator(chipch, i, EVB, boolean2int(op.Evb));
-            this.registers.writeOperator(chipch, i, DAM, (int) (op.Dam));
-            this.registers.writeOperator(chipch, i, DVB, (int) (op.Dvb));
-            this.registers.writeOperator(chipch, i, DT, (int) (op.Dt));
-            this.registers.writeOperator(chipch, i, KSL, (int) (op.Ksl));
-            this.registers.writeOperator(chipch, i, KSR, boolean2int(op.Ksr));
-            this.registers.writeOperator(chipch, i, WS, (int) (op.Ws));
-            this.registers.writeOperator(chipch, i, MULT, (int) (op.Multi));
-            this.registers.writeOperator(chipch, i, FB, (int) (op.Fb));
-            this.registers.writeOperator(chipch, i, AR, (int) (op.Ar));
-            this.registers.writeOperator(chipch, i, DR, (int) (op.Dr));
-            this.registers.writeOperator(chipch, i, SL, (int) (op.Sl));
-            this.registers.writeOperator(chipch, i, SR, (int) (op.Sr));
-            this.registers.writeOperator(chipch, i, RR, (int) (op.Rr));
-            this.registers.writeOperator(chipch, i, TL, (int) (op.Tl));
-            this.registers.writeOperator(chipch, i, XOF, boolean2int(op.Xof));
+        for (var i = 0; i < ((VM35FMVoice) instr.voice).operators.size(); i++) {
+            var op = ((VM35FMVoice) instr.voice).operators.get(i);
+            this.registers.writeOperator(chipch, i, EAM, boolean2int(op.eam));
+            this.registers.writeOperator(chipch, i, EVB, boolean2int(op.evb));
+            this.registers.writeOperator(chipch, i, DAM, op.dam);
+            this.registers.writeOperator(chipch, i, DVB, op.dvb);
+            this.registers.writeOperator(chipch, i, DT, op.DT);
+            this.registers.writeOperator(chipch, i, KSL, op.ksl);
+            this.registers.writeOperator(chipch, i, KSR, boolean2int(op.ksr));
+            this.registers.writeOperator(chipch, i, WS, op.ws);
+            this.registers.writeOperator(chipch, i, MULT, op.multi.ordinal());
+            this.registers.writeOperator(chipch, i, FB, op.fb);
+            this.registers.writeOperator(chipch, i, AR, op.ar);
+            this.registers.writeOperator(chipch, i, DR, op.dr);
+            this.registers.writeOperator(chipch, i, SL, op.sl);
+            this.registers.writeOperator(chipch, i, SR, op.sr);
+            this.registers.writeOperator(chipch, i, RR, op.rr);
+            this.registers.writeOperator(chipch, i, TL, op.tl);
+            this.registers.writeOperator(chipch, i, XOF, boolean2int(op.xof));
         }
 
-        this.registers.writeChannel(chipch, ALG, (int) (instr.FmVoice.Alg));
-        this.registers.writeChannel(chipch, LFO, (int) (instr.FmVoice.Lfo));
-        this.registers.writeChannel(chipch, PANPOT, (int) (instr.FmVoice.Panpot));
-        this.registers.writeChannel(chipch, BO, (int) (instr.FmVoice.Bo));
+        this.registers.writeChannel(chipch, ALG, (int) (((VM35FMVoice) instr.voice).alg.ordinal()));
+        this.registers.writeChannel(chipch, LFO, (int) (((VM35FMVoice) instr.voice).lfo));
+        this.registers.writeChannel(chipch, PANPOT, (int) (((VM35FMVoice) instr.voice).panpot.ordinal()));
+        this.registers.writeChannel(chipch, BO, (int) (((VM35FMVoice) instr.voice).bo.ordinal()));
     }
 }

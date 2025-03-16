@@ -4,6 +4,7 @@
 
 package vavi.sound.yamaha.smaf.voice;
 
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.lang.System.Logger;
@@ -12,11 +13,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import vavi.sound.yamaha.smaf.enums.Enums.Algorithm;
+import vavi.sound.yamaha.smaf.enums.Enums.BasicOctave;
+import vavi.sound.yamaha.smaf.enums.Enums.Panpot;
+import vavi.sound.yamaha.smaf.enums.Enums.VoiceType;
+import vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion;
+import vavi.util.serdes.Serdes;
 
 import static java.lang.System.getLogger;
 import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
 
 
+/**
+ * Represents .vm5 voice lib file.
+ */
 public class VM5VoiceLib implements VoiceLib {
 
     private static final Logger logger = getLogger(VM5VoiceLib.class.getName());
@@ -58,4 +68,67 @@ public class VM5VoiceLib implements VoiceLib {
             }
         }
     }
+
+    // LoadFile loads a sound library from a file.
+    public byte[] LoadFile(String file) throws IOException {
+        var b = Files.readAllBytes(Path.of("voice").resolve(file));
+        this.LoadBytes(b);
+        return b;
+    }
+
+    // LoadBytes loads a sound library from a byte sequence.
+    void LoadBytes(byte[] b) throws IOException {
+        VM5VoiceLib loaded = new VM5VoiceLib();
+        Serdes.Util.deserialize(new ByteArrayInputStream(b), loaded);
+        this.programs.addAll(loaded.programs);
+        var x = this.Normalize();
+    }
+
+    // Normalize removes outliers from the timbre data and normalizes it.
+    // Returns a list of the tones in which anomalies were detected.
+    public VM35VoicePC[] Normalize() {
+        if (this.programs == null) {
+            this.programs = new ArrayList<>();
+        }
+        var result = new ArrayList<VM35VoicePC>();
+        for (var i = 0; i < this.programs.size(); i++) {
+            var pc = this.programs.get(i);
+            if (pc == null) {
+                pc = new VM35VoicePC();
+                this.programs.set(i, pc);
+            }
+            if (!pc.normalize()) {
+                result.add(pc);
+            }
+        }
+        return result.toArray(VM35VoicePC[]::new);
+    }
+
+    // Get retrieves tone data.
+    public VM35VoicePC Get(int msb, int lsb, int pc, int note) {
+        for (var p : this.programs) {
+            if (!(p.pc == pc && p.bankLSB == lsb && p.bankMSB == msb)) {
+                continue;
+            }
+            if (p.drumNote != null && p.drumNote.ordinal() != note) {
+                continue;
+            }
+            return p;
+        }
+        return defaultPC;
+    }
+
+    public static VM35VoicePC defaultPC = new VM35VoicePC() {
+        {
+            version = VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
+            name = "default";
+            voiceType = VoiceType.VoiceType_FM;
+            voice = new VM35FMVoice() {{
+                panpot = Panpot.Panpot15;
+                bo = BasicOctave.BasicOctave_Normal;
+                alg = Algorithm.A1;
+                operators = new ArrayList<>();
+            }};
+        }
+    };
 }

@@ -9,58 +9,58 @@ import java.util.function.Function;
 
 public class Data {
 
-//	/** Frac64 は、0 以上 1 未満の固定小数点数を符号なし64ビット整数で表現する型です。 */
+//	/** Frac64 is a type that represents a fixed-point number between 0 and 1 as an unsigned 64-bit integer. */
 //	type Frac64 long;
 
-    /** FloatToFrac64 は、float64 から Frac64 に値を変換します。 */
+    /** FloatToFrac64 converts a value from a float64 to a Frac64. */
     public static long floatToFrac64(double v) {
         return (long) (v * Pow64Of2);
     }
 
-    /** MulUint64 は、Frac64 に uint64 型の値を掛けた値を返します。 */
+    /** MulUint64 returns the result of multiplying Frac64 by a uint64 value. */
     public static long mulUint64(long rhs, long v) {
         return v * rhs;
     }
 
-    /** MulInt32Frac32 は、Frac64 に Int32Frac32 型の値を掛けた値を返します。 */
+    /** MulInt32Frac32 returns the result of multiplying Frac64 by a value of type Int32Frac32. */
     public static long mulInt32Frac32(long v, long rhs) {
         return (v >> 32) * rhs;
     }
 
-    /** Int32Frac32 は、0 以上 2^32 未満の固定小数点数を符号なし64ビット整数で表現する型です。 */
+    /** Int32Frac32 is a type that represents a fixed-point number between 0 and 2^32 (inclusive) as an unsigned 64-bit integer. */
 //	type Int32Frac32 long;
 
-    // DebugDumpFPS は、デバッグとしてダンプ表示を行う頻度 [FPS] です。
+    // DebugDumpFPS is the frequency [FPS] at which debug dumps are displayed.
     public static final int DebugDumpFPS = 30;
 
-    // ChannelCount は、最大チャンネル数です。
+    // ChannelCount is the maximum number of channels.
     public static final int ChannelCount = 32;
 
-    // SampleRate は、内部的なサンプルレート[Hz]です。
+    // SampleRate is the internal sample rate [Hz].
     public static final double SampleRate = 48000;
 
-    // A3Note は、MIDIメッセージにおけるA3のノートナンバーです。
+    // A3Note is the A3 note number in the MIDI message.
     public static final int A3Note = 9 + 12 * 4;
 
-    // A3Freq は、A3の周波数[Hz]です。
+    // A3Freq is the frequency of A3 [Hz].
     public static final double A3Freq = 440.0;
 
-    // FNUMCoef は、周波数とFNUMを相互に変換する際に使用する係数です。
+    // FNUMCoef is the coefficient used to convert between frequency and FNUM.
     public static final double FNUMCoef = (1 << 19) / SampleRate * .5;
 
-    // Pow32Of2 は、2の32乗です。
+    // Pow32Of2 is 2 to the 32nd power.
     public static final double Pow32Of2 = (1L << 32);
 
-    // Pow63Of2 は、2の63乗です。
+    // Pow63Of2 is 2 to the power of 63.
     public static final double Pow63Of2 = (1L << 63);
 
-    // Pow64Of2 は、2の64乗です。
+    // Pow64Of2 is 2 to the 64th power.
     public static final double Pow64Of2 = Pow63Of2 * 2.0;
 
-    // ModulatorMultiplier は、モジュレータの出力を他のオペレータに入力する際の増幅率です。
+    // ModulatorMultiplier is the amplification factor for the modulator output when input to another operator.
     public static final double ModulatorMultiplier = 4.0;
 
-    // ModulatorMatrix は、各 alg でモジュレータとして使用されるオペレータを表すマトリクスです。
+    // ModulatorMatrix is a matrix representing the operator used as a modulator in each alg.
     public static final boolean[][] ModulatorMatrix = {
             {true, false, false, false},
             {false, false, false, false},
@@ -72,7 +72,7 @@ public class Data {
             {false, true, false, false},
     };
 
-    // CarrierMatrix は、各 alg でキャリアとして使用されるオペレータを表すマトリクスです。
+    // CarrierMatrix is a matrix representing the operators used as carriers in each alg.
     public static final boolean[][] CarrierMatrix = {
             {false, true, false, false},
             {true, true, false, false},
@@ -84,7 +84,7 @@ public class Data {
             {true, false, true, true},
     };
 
-    // VolumeTable は、MIDIメッセージのボリュームやエクスプレッションによって振幅にかかる係数のテーブルです。
+    // The VolumeTable is a table of coefficients that affect amplitude depending on the volume and expression of MIDI messages.
     public static final double[] VolumeTable = {
             1e30, 47.9, 42.6, 37.2, 33.1, 29.8, 27.0, 24.6,
             22.4, 20.6, 18.9, 17.3, 15.9, 14.6, 13.4, 12.2,
@@ -92,10 +92,10 @@ public class Data {
             4.4, 3.6, 3.0, 2.3, 1.7, 1.1, 0.6, 0.0,
     };
 
-    // PanTable は、MIDIメッセージのパンによって左右それぞれの振幅にかかる係数のテーブルです。
+    // PanTable is a table of coefficients that are applied to the left and right amplitudes by panning MIDI messages.
     public static final double[][] PanTable = new double[128][2];
 
-    // DTCoef は、DTパラメータ および BLOCKとFNUM上位1ビットによって加わる周波数差分[Hz]のテーブルです。
+    // DTCoef is a table of the frequency difference [Hz] added by the DT parameter and the most significant bit of BLOCK and FNUM.
     public static final double[][] DTCoef = {
             {0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00},
             {0.00, 0.00, 0.05, 0.05, 0.05, 0.05, 0.09, 0.09, 0.14, 0.14, 0.18, 0.23, 0.27, 0.32, 0.37, 0.37},
@@ -107,54 +107,54 @@ public class Data {
             {-0.09, -0.09, -0.14, -0.14, -0.18, -0.23, -0.28, -0.32, -0.41, -0.46, -0.59, -0.64, -0.87, -0.91, -1.00, -1.00},
     };
 
-    // LFOFrequency は、LFOパラメータによって決まるビブラートやトレモロの周波数のテーブルです。
-    // 単位は、2の64乗を1周とする1サンプルあたりの増分です。
+    // LFOFrequency is a table of vibrato and tremolo frequencies determined by the LFO parameters.
+    // The unit is an increment per sample, where one cycle is 2 to the power of 64.
     public static final long[] LFOFrequency = new long[4];
 
-    // ModTableLen は、モジュレーション（ビブラートやトレモロ）の振幅テーブルの長さです。
+    // ModTableLen is the length of the modulation (vibrato and tremolo) amplitude table.
     public static final int ModTableLen = 8192;
 
-    // ModTableLenBits は、モジュレーション振幅テーブルのインデックスに必要なビット数です。
-    // 2 の ModTableLenBits 乗が ModTableLen になります。
+    // ModTableLenBits is the number of bits required to index into the modulation amplitude table.
+    // ModTableLen is 2 to the power of ModTableLenBits.
     public static final int ModTableLenBits = 13;
 
-    // ModTableIndexShift は、2の64乗を1周とする値からモジュレーション振幅テーブルの
-    // インデックスに変換する際、右シフトするビット数です。
+    // ModTableIndexShift is a function that changes the position of the modulation amplitude table from 2^64 to the power of 1.
+    // The number of bits to shift right when converting to an index.
     public static final int ModTableIndexShift = 64 - ModTableLenBits;
 
-    // VibratoTableInt32Frac32 は、ビブラート（DVB）によって周波数にかかる係数のテーブルです。
-    // 整数部32bit・小数部32bitで表されます。
+    // VibratoTableInt32Frac32 is a table of coefficients applied to frequency by vibrato (DVB).
+    // It is expressed as a 32-bit integer part and a 32-bit decimal part.
     public static final long[][] VibratoTableInt32Frac32 = new long[4][ModTableLen];
 
-    // TremoloTable は、トレモロ（DAM）によって振幅にかかる係数のテーブルです。
+    // TremoloTable is a table of coefficients applied to amplitude by tremolo (DAM).
     public static final double[][] TremoloTable = new double[4][ModTableLen];
 
-    // FeedbackTable は、FBパラメータによってフィードバックされる信号の振幅にかかる係数のテーブルです。
+    // FeedbackTable is a table of coefficients that affect the amplitude of the signal fed back by the FB parameters.
     public static final double[] FeedbackTable = {
             0, 1.0 / 32.0, 1.0 / 16.0, 1.0 / 8.0, 1.0 / 4.0, 1.0 / 2.0, 1.0, 2.0
     };
 
-    // MultTable2 は、MULTパラメータによって周波数にかかる係数のテーブルです。2で割って使用します。
+    // MultTable2 is a table of coefficients applied to frequencies by MULT parameters. Divide by 2 before use.
     public static final long[] MultTable2 = {
             1, 1 * 2, 2 * 2, 3 * 2, 4 * 2, 5 * 2, 6 * 2, 7 * 2, 8 * 2, 9 * 2, 10 * 2, 10 * 2, 12 * 2, 12 * 2, 15 * 2, 15 * 2
     };
 
-    // KSLTable は、KSLパラメータによる振幅の減衰量のテーブルです。
-    // 添字は順に KSL, BLOCK, FNUM上位5bit です。
+    // KSLTable is a table of amplitude attenuation due to KSL parameters.
+    // The subscripts are the upper 5 bits of KSL, BLOCK, and FNUM, respectively.
     public static final double[][][] KSLTable = new double[4][8][32];
 
-    // WaveformLen は、波形テーブルの長さです。
+    // WaveformLen is the length of the waveform table.
     public static final int WaveformLen = 1024;
 
-    // WaveformLenBits は、波形テーブルのインデックスに必要なビット数です。
-    // 2 の WaveformLenBits 乗が WaveformLen になります。
+    // WaveformLenBits is the number of bits required to index into the waveform table.
+    // 2 to the power of WaveformLenBits is WaveformLen.
     public static final int WaveformLenBits = 10;
 
-    // WaveformIndexShift は、2の64乗を1周とする値から波形テーブルの
-    // インデックスに変換する際、右シフトするビット数です。
+    // WaveformIndexShift is the number of bits to shift right
+    // when converting from a 2^64 value into a wavetable index.
     public static final int WaveformIndexShift = 64 - WaveformLenBits;
 
-    // Waveforms は、波形テーブルです。
+    // Waveforms is a wave table.
     public static double[][] Waveforms = new double[32][];
 
     public static double calculateIncrement(double begin, double end, double period) {
@@ -261,7 +261,7 @@ public class Data {
         {
 		/*
 
-			  波形は完全に上位互換
+			  Waveforms are fully upwardly compatible
 
 			  OPL3:
 				SIN   | 0:^v 1:^- 2:^^ 3:''

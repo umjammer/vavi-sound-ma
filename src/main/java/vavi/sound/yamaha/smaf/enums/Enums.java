@@ -9,7 +9,7 @@ import com.google.gson.Gson;
 
 public class Enums {
 
-    private static Gson gson = new Gson().newBuilder().create();
+    private static final Gson gson = new Gson().newBuilder().create();
 
     public enum VoiceType {
 
@@ -28,7 +28,7 @@ public class Enums {
             return "%s(%d)".formatted(name(), ordinal());
         }
 
-        byte[] MarshalJSON() {
+        byte[] marshalJSON() {
             return gson.toJson(toString()).getBytes();
         }
     }

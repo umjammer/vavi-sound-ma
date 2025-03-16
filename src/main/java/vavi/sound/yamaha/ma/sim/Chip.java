@@ -10,18 +10,18 @@ import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.DebugDumpFPS;
 
 public class Chip {
 
-    /** sampleRate は、出力波形の目標サンプルレートです。 */
+    /** sampleRate is the target sample rate of the output waveform. */
     double sampleRate;
-    /** totalLevel は、出力のトータルな音量[dB]です。 */
+    /** totalLevel is the total volume of the output [dB]. */
     double totalLevel;
-    /** dumpMIDIChannel は、ダンプ表示対象のMIDIチャンネルです。未使用時は -1 です。 */
+    /** dumpMIDIChannel is the MIDI channel for which the dump is displayed. If unused, it is set to -1. */
     int dumpMIDIChannel;
-    /** channels は、このチップが備える全チャンネルです。 */
+    /** channels is the total number of channels this chip has. */
     Channel[] channels;
 
     double[] currentOutput;
 
-    /** NewChip は、新しい Chip を作成します。 */
+    /** NewChip creates a new Chip. */
     public Chip(int sampleRate, double totalLevel, int dumpMIDIChannel) {
         this.sampleRate = sampleRate;
         this.totalLevel = totalLevel;
@@ -34,12 +34,12 @@ public class Chip {
 
     int debugDumpCount = 0;
 
-    /** SampleRate は、このチップに設定されているサンプルレートを返します。 */
+    /** SampleRate returns the sample rate that this chip is set to. */
     double sampleRate() {
         return this.sampleRate;
     }
 
-    /** Next は、次のサンプルを生成し、その左右それぞれの振幅を返します。 */
+    /** Next generates the next sample and returns its amplitude to the left and right. */
     public double[] next() {
         double l = 0, r = 0;
         for (var channel : this.channels) {

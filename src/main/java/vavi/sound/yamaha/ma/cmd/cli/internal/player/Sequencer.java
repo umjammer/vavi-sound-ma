@@ -34,14 +34,14 @@ public class Sequencer implements AutoCloseable {
 
     static final String defaultMIDIDeviceName = "IAC YAMAHA Virtual MIDI Device 0";
 
-    // Sequencer は、PortMIDI により MIDIメッセージを受信して Chip のレジスタをコントロールします。
+    // The Sequencer receives MIDI messages via PortMIDI and controls the Chip's registers.
     // TODO: rename
     Controller fmfm;
     Sequence input;
 
     Sequencer() {}
 
-    // NewSequencer は、新しい Sequencer を作成します。
+    // NewSequencer creates a new Sequencer.
     public Sequencer(String midiDevice, ControllerOpts opts) throws MidiUnavailableException, InvalidMidiDataException {
         if (midiDevice.equals("@")) {
             midiDevice = defaultMIDIDeviceName;
@@ -87,7 +87,7 @@ logger.log(Level.ERROR, e.getMessage(), e);
         var info = MidiSystem.getMidiDevice(selectedMIDIDeviceID);
         System.err.printf("MIDI device: %s > %s\n", info.getReceivers(), info.getDeviceInfo().getName());
 
-        var input = new Sequence(/* selectedMIDIDeviceID*/ Sequence.PPQ, 512, 1);
+        var input = new Sequence(/* selectedMIDIDeviceID */ Sequence.PPQ, 512, 1);
 
         var seq = new Sequencer() {{
             fmfm = new Controller(opts);
@@ -121,12 +121,12 @@ logger.log(Level.ERROR, e.getMessage(), e);
         });
     }
 
-    // Close は、MIDIメッセージの受信を終了します。
+    // Close ends reception of MIDI messages.
     @Override
     public void close() {
     }
 
-    // ListMIDIDeivces は、入力として選択可能なMIDIデバイスの一覧を取得します。
+    // ListMIDIDevices gets a list of MIDI devices that can be selected as input.
     String[] ListMIDIDeivces() throws MidiUnavailableException {
         List<String> result = new ArrayList<>();
         Info[] infos = MidiSystem.getMidiDeviceInfo();

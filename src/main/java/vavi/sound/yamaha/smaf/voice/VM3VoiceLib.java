@@ -17,6 +17,9 @@ import static java.lang.System.getLogger;
 import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM35FMVoiceVersion_VM3Lib;
 
 
+/**
+ * Represents .vm3 voice lib file.
+ */
 public class VM3VoiceLib implements VoiceLib {
 
     private static final Logger logger = getLogger(VM3VoiceLib.class.getName());

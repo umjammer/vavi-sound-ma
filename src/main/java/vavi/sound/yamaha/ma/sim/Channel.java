@@ -17,7 +17,7 @@ import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.VolumeTable;
 
 
 /**
- * Channel は、音源のチャンネルです。
+ * Channel is the channel of the audio source.
  * <pre>
  * ==================================================
  * MA-5
@@ -148,7 +148,7 @@ public class Channel {
     }
 
     void reset() {
-        // TODO モジュレーションは発音ごとにリセットされるのか？
+        // TODO Does the modulation reset with each note?
         this.modIndexFrac64 = 0;
         this.feedback1Prev = .0;
         this.feedback1Curr = .0;

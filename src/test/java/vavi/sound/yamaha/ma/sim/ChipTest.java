@@ -12,8 +12,14 @@ import com.code_intelligence.jazzer.api.FuzzedDataProvider;
 import com.code_intelligence.jazzer.junit.FuzzTest;
 import vavi.sound.yamaha.ma.fmfm.Controller;
 import vavi.sound.yamaha.ma.fmfm.Controller.ControllerOpts;
-import vavi.sound.yamaha.smaf.pb.smaf.Smaf.VM35VoicePC;
-import vavi.sound.yamaha.smaf.pb.smaf.pb.VM5VoiceLib;
+import vavi.sound.yamaha.smaf.enums.Enums.Algorithm;
+import vavi.sound.yamaha.smaf.enums.Enums.BasicOctave;
+import vavi.sound.yamaha.smaf.enums.Enums.Panpot;
+import vavi.sound.yamaha.smaf.enums.Enums.VoiceType;
+import vavi.sound.yamaha.smaf.enums.Note;
+import vavi.sound.yamaha.smaf.voice.VM35FMVoice;
+import vavi.sound.yamaha.smaf.voice.VM35VoicePC;
+import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
 
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIControlChange;
 import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOff;
@@ -28,15 +34,17 @@ class ChipTest {
 		var sampleRate = 44100.0;
 
 		for (var i = 0; i < 1000; i++) {
-			var pc = VM35VoicePC.getDefaultInstance();
-			f.Fuzz(pc);
-			pc.BankMsb = 0;
-			pc.BankLsb = 0;
-			pc.Pc = 0;
-			pc.DrumNote = 0;
-			pc.VoiceType = VoiceType_FM;
-			pc.FmVoice = new VM35FMVoice();
-			f.Fuzz(pc.FmVoice);
+			var pc = new VM35VoicePC();
+			pc.bankMSB = data.consumeInt();
+			pc.bankLSB = data.consumeInt();
+			pc.pc = data.consumeInt();
+			pc.drumNote = Note.values()[data.consumeInt(0, Note.values().length)];
+			pc.voiceType = VoiceType.values()[data.consumeInt(0, VoiceType.values().length)];
+			pc.voice = new VM35FMVoice();
+			((VM35FMVoice) pc.voice).alg = Algorithm.values()[data.consumeInt(0, Algorithm.values().length)];
+			((VM35FMVoice) pc.voice).panpot = Panpot.values()[data.consumeInt(0, Panpot.values().length)];
+			((VM35FMVoice) pc.voice).bo = BasicOctave.values()[data.consumeInt(0, BasicOctave.values().length)];
+			((VM35FMVoice) pc.voice).lfo = data.consumeInt();
 
 			var lib = new VM5VoiceLib() {{
 				programs = new ArrayList<>();

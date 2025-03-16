@@ -4,24 +4,30 @@
 
 package vavi.sound.yamaha.ma.cmd.cli;
 
+import javax.sound.midi.MidiDevice;
+import javax.sound.midi.MidiSystem;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-
-import org.klab.commons.cli.Binder.Context;
+import org.klab.commons.cli.HelpOption;
 import org.klab.commons.cli.Option;
 import org.klab.commons.cli.Options;
 import vavi.sound.yamaha.ma.cmd.cli.internal.player.Limiter;
 import vavi.sound.yamaha.ma.cmd.cli.internal.player.Renderer;
 import vavi.sound.yamaha.ma.cmd.cli.internal.player.Sequencer;
+import vavi.sound.yamaha.ma.fmfm.Controller;
 import vavi.sound.yamaha.ma.fmfm.Controller.ControllerOpts;
 import vavi.sound.yamaha.ma.sim.Chip;
 import vavi.sound.yamaha.ma.sim.Registers;
 import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -30,27 +36,30 @@ import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
  * @author <a href="mailto:mersenne.sister@gmail.com">but80</a>
  */
 @Options()
+@HelpOption(option = "?")
 public class Main {
 
-    static String version;
+    private static final Logger logger = getLogger(Main.class.getName());
 
-    void init() {
-        if (version.isEmpty()) {
-            version = "unknown";
-        }
-    }
+    static String version = "unknown";
 
     @Option(argName = "list", option = "l", description = "List MIDI devices")
-    String listCmd;
+    boolean listCmd;
 
-    Consumer<Context> x = (ctx) -> {
-        devices = player.ListMIDIDeivces();
-        for (var dev : devices) {
-            System.err.printf(dev);
+    void list() {
+        try {
+            MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+            for (MidiDevice.Info info : infos) {
+                MidiDevice device = MidiSystem.getMidiDevice(info);
+                if (device.getMaxTransmitters() == 0)
+                    System.out.println(device.getDeviceInfo().getName() + ":" + device.getDeviceInfo().getVendor() + ":" + device.getDeviceInfo().getDescription() + ", T: " + device.getMaxTransmitters() + ", R: " + device.getMaxReceivers());
+            }
+        } catch (Exception e) {
+            logger.log(Level.ERROR, e.getMessage(), e);
         }
     };
 
-    @Option(argName = "midi", option = "m", description = "Listen MIDI events", usage = "[<Input MIDI device>]")
+    @Option(argName = "midi", option = "m", args = 1, description = "Listen MIDI events" /*, usage = "[<Input MIDI device>]" */)
     String midiCmd;
 
     @Option(argName = "mono", option = "m", description = "Force mono mode in all MIDI channels except drum PC")
@@ -59,88 +68,91 @@ public class Main {
     @Option(argName = "mute-nopc", option = "z", description = "Mute if program change is not found")
     boolean muteNoPc;
 
-    @Option(argName = "level", option = "l", description = "Total level in dB")
+    @Option(argName = "level", option = "v", args = 1, description = "Total level in dB")
     float level= -12.0f;
-    @Option(argName = "limiter", option = "c", description = "player.Limiter threshold in dB")
+    @Option(argName = "limiter", option = "c", args = 1, description = "player.Limiter threshold in dB")
     double limiter = -6.0;
-    @Option(argName = "ignore", option = "n", description = "Ignore specified MIDI channel")
+    @Option(argName = "ignore", option = "n", args = 1, description = "Ignore specified MIDI channel")
     int ignore;
-    @Option(argName = "solo", option = "s",description = "Accept only specified MIDI sim.channel")
+    @Option(argName = "solo", option = "s", args = 1, description = "Accept only specified MIDI sim.channel")
     int solo;
-    @Option(argName = "dump", option = "d", description = "Dump MIDI sim.channel")
+    @Option(argName = "dump", option = "d", args = 1, description = "Dump MIDI sim.channel")
     int dump;
     @Option(argName = "print", option = "p",description = "Print status")
     boolean print;
 
-    Consumer<Context> y = (ctx) -> {
-        var args = ctx.Args();
-        var midiDevice = "";
-        if (1 <= ctx.NArg()) {
-            midiDevice = args[0];
-        }
-
-        var info = Files.list(Path.of("voice"));
-        AtomicReference<VM5VoiceLib> lib = new AtomicReference<>();
-        info.forEach((i) -> {
-            if (Files.isDirectory(i) || !i.getFileName().toString().endsWith(".vm5.pb")) {
-                return;
+    void midi() {
+        try {
+            var midiDevice = "";
+            if (midiCmd != null) {
+                midiDevice = midiCmd;
             }
-            try {
-                lib.set(new VM5VoiceLib(Path.of("voice/").resolve(i.getFileName()).toString()));
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
 
-        var dumpMIDIChannel = -1;
-        if (0 < dump) {
-            dumpMIDIChannel = dump - 1;
-        }
-
-        var renderer = new Renderer();
-        var limiter = new Limiter(renderer.Parameters.getSampleRate());
-        limiter.SetThreshold(this.limiter);
-        renderer.Insert(limiter);
-        var chip = new Chip((int) renderer.Parameters.getSampleRate(),
-                level,
-                dumpMIDIChannel
-        );
-        var regs = new Registers(chip);
-        var opts = new ControllerOpts() {{
-            registers = regs;
-            library = lib.get().programs.get(0);
-            muteIfPCNotFound = muteNoPc;
-            forceMono = mono;
-            printStatus = print;
-            ignoreMIDIChannels = new ArrayList<>();
-            soloMIDIChannel = dumpMIDIChannel;
-        }};
-        if (0 < ignore) {
-            opts.ignoreMIDIChannels.add(ignore - 1);
-        }
-        if (0 < solo) {
-            for (var i = 0; i < 16; i++) {
-                if (i == solo - 1) {
-                    continue;
+            var info = Files.list(Path.of("voice"));
+            AtomicReference<VM5VoiceLib> lib = new AtomicReference<>();
+            info.forEach((i) -> {
+                if (Files.isDirectory(i) || !i.getFileName().toString().endsWith(".vm5.pb")) {
+                    return;
                 }
-                opts.ignoreMIDIChannels.add(i);
+                try {
+                    lib.set(new VM5VoiceLib(Path.of("voice/").resolve(i.getFileName()).toString()));
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+
+            var dumpMIDIChannel = -1;
+            if (0 < dump) {
+                dumpMIDIChannel = dump - 1;
             }
-        }
-        try (var seq = new Sequencer(midiDevice, opts)) {
-            renderer.start(chip.next(), seq.flushMIDIMessages);
-            try { Thread.sleep(24 * 60 * 60 * 1000); } catch (InterruptedException ignore) {}
+
+            var renderer = new Renderer();
+            var limiter = new Limiter(renderer.Parameters.getSampleRate());
+            limiter.SetThreshold(this.limiter);
+            renderer.Insert(limiter);
+            var chip = new Chip((int) renderer.Parameters.getSampleRate(),
+                    level,
+                    dumpMIDIChannel
+            );
+            var regs = new Registers(chip);
+            int _dumpMIDIChannel = dumpMIDIChannel;
+            var opts = new ControllerOpts() {{
+                registers = regs;
+                library = lib.get();
+                muteIfPCNotFound = muteNoPc;
+                forceMono = mono;
+                printStatus = print;
+                ignoreMIDIChannels = new ArrayList<>();
+                soloMIDIChannel = _dumpMIDIChannel;
+            }};
+            if (0 < ignore) {
+                opts.ignoreMIDIChannels.add(ignore - 1);
+            }
+            if (0 < solo) {
+                for (var i = 0; i < 16; i++) {
+                    if (i == solo - 1) {
+                        continue;
+                    }
+                    opts.ignoreMIDIChannels.add(i);
+                }
+            }
+            Controller controller = new Controller();
+            try (var seq = new Sequencer(midiDevice, opts)) {
+                renderer.Start(chip::next, controller::FlushMIDIMessages);
+                Thread.sleep(24 * 60 * 60 * 1000);
+            }
+        } catch (Exception e) {
+            logger.log(Level.ERROR, e.getMessage(), e);
         }
     };
 
     public static void main(String[] args) {
         var app = new Main();
         Options.Util.bind(args, app);
-//        app.Name = "fmfm-cli";
-//        app.HelpName = "fmfm-cli";
-//        app.Commands = new Command[] { midiCmd, listCmd };
-//        app.Action = (cli.Context ctx) -> {
-//            cli.ShowAppHelp(ctx);
-//        };
-//        app.Run(os.Args);
+        if (app.listCmd) {
+            app.list();
+        } else if (app.midiCmd != null) {
+            app.midi();
+        }
     }
 }

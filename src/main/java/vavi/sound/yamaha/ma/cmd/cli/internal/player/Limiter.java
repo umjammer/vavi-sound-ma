@@ -4,14 +4,14 @@
 
 package vavi.sound.yamaha.ma.cmd.cli.internal.player;
 
-// Insertion は、インサーションエフェクトを抽象化したインタフェースです。
+// Insertion is an interface that abstracts insertion effects.
 interface Insertion {
 
-    // Next は、次のサンプルを生成し、その左右それぞれの振幅を返します。
+    // Next generates the next sample and returns its amplitude to the left and right.
     double[] Next(double l, double r);
 }
 
-// Limiter は、インサーションエフェクト「リミッター」です。
+// Limiter is an insertion effect called a "limiter."
 public class Limiter implements Insertion {
 
     double sampleRate;
@@ -24,20 +24,20 @@ public class Limiter implements Insertion {
     double[][] buffer;
     int bufferPos;
 
-    // NewLimiter は、新しい Limiter を作成します。
+    // NewLimiter creates a new Limiter.
     public Limiter(double sampleRate) {
         this.sampleRate = sampleRate;
         this.SetThreshold(-3.0).SetLookAhead(.005).SetAttack(.005).SetRelease(.02);
     }
 
-    // SetThreshold は、スレッショルドレベル [dB] を設定します。
+    // SetThreshold sets the threshold level [dB].
     public Limiter SetThreshold(double v) {
         this.threshold = Math.pow(10, v / 20.0);
         this.thresholdDB = v;
         return this;
     }
 
-    // SetLookAhead は、先読み時間 [秒] を設定します。
+    // SetLookAhead sets the look ahead time [seconds].
     Limiter SetLookAhead(double v) {
         var n = (int) (Math.ceil(this.sampleRate * v));
         this.buffer = new double[n][2];
@@ -45,14 +45,14 @@ public class Limiter implements Insertion {
         return this;
     }
 
-    // SetAttack は、アタックタイムを設定します。
+    // SetAttack sets the attack time.
     Limiter SetAttack(double sec) {
         this.attack = this.timeToMultiplier(sec);
         this.attackInv = 1.0 - this.attack;
         return this;
     }
 
-    // SetRelease は、リリースタイムを設定します。
+    // SetRelease sets the release time.
     Limiter SetRelease(double sec) {
         this.release = this.timeToMultiplier(sec);
         return this;
@@ -64,7 +64,7 @@ public class Limiter implements Insertion {
 //		return Math.exp(-0.9542 / n);
     }
 
-    // Next は、次のサンプルを生成し、その左右それぞれの振幅を返します。
+    // Next generates the next sample and returns its amplitude to the left and right.
     @Override
     public double[] Next(double l, double r) {
         this.buffer[this.bufferPos][0] = l;

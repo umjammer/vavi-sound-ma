@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import com.google.gson.Gson;
+import java.util.List;
 import vavi.sound.yamaha.smaf.enums.Enums.Algorithm;
 import vavi.sound.yamaha.smaf.enums.Enums.BasicOctave;
 import vavi.sound.yamaha.smaf.enums.Enums.Multiplier;
@@ -38,63 +39,63 @@ public class VM35FMVoice implements VM35Voice {
 
         // Operator number
         //`json:"-"`
-        int num;
+        public int num;
         // `json:"-"`
-        VM35FMVoiceVersion version;
+        public VM35FMVoiceVersion version;
         // Multiplier
         //`json:"multi"`
-        Multiplier multi;
+        public Multiplier multi;
         // Detune
         //`json:"dt"`
-        int DT;
+        public int DT;
         // Attack Rate
         //`json:"ar"`
-        int ar;
+        public int ar;
         // Decay Rate
         //`json:"dr"`
-        int dr;
+        public int dr;
         // Sustain Rate
         //`json:"sr"`
-        int sr;
+        public int sr;
         // Release Rate
         //`json:"rr"`
-        int rr;
+        public int rr;
         // Sustain Level
         //`json:"sl"`
-        int sl;
+        public int sl;
         // Total Level
         //`json:"tl"`
-        int tl;
+        public int tl;
         // Key Scaling Level
         //`json:"ksl"`
-        int ksl;
+        public int ksl;
         // Depth of am
         //`json:"dam"`
-        int dam;
+        public int dam;
         // Depth of Vibrato
         //`json:"dvb"`
-        int dvb;
+        public int dvb;
         // Feedback
         //`json:"fb"`
-        int fb;
+        public int fb;
         // Wave Shape
         //`json:"ws"`
-        int ws;
+        public int ws;
         // Ignore KeyOff
         //`json:"xof"`
-        boolean xof;
+        public boolean xof;
         // Keep sustain rate after KeyOff (unused in YMF825)
         //`json:"sus"`
-        boolean sus;
+        public boolean sus;
         // Key Scaling Rate
         //`json:"ksr"`
-        boolean ksr;
+        public boolean ksr;
         // Enable am
         //`json:"eam"`
-        boolean eam;
+        public boolean eam;
         // Enable Vibrato
         //`json:"evb"`
-        boolean evb;
+        public boolean evb;
 
         void Read(DataInputStream rdr, int[] rest) throws IOException {
             //    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
@@ -178,6 +179,27 @@ public class VM35FMVoice implements VM35Voice {
             var s = String.join(" ", t);
             return "Op #%d: multi=%s DT=%d\n".formatted(this.num + 1, this.multi, this.DT) + indent(s, "\t");
         }
+
+        // Normalize removes outliers from the timbre data and normalizes it.
+        // Returns true if the tone was normal to begin with.
+        boolean Normalize() {
+            var ok = new boolean[] {true};
+            VM35Voice.normalizeint(ok, this.multi.ordinal(), 0, 15);
+            VM35Voice.normalizeint(ok, this.DT, 0, 7);
+            VM35Voice.normalizeint(ok, this.ar, 0, 15);
+            VM35Voice.normalizeint(ok, this.dr, 0, 15);
+            VM35Voice.normalizeint(ok, this.sr, 0, 15);
+            VM35Voice.normalizeint(ok, this.rr, 0, 15);
+            VM35Voice.normalizeint(ok, this.sl, 0, 15);
+            VM35Voice.normalizeint(ok, this.tl, 0, 63);
+            VM35Voice.normalizeint(ok, this.ksl, 0, 3);
+            VM35Voice.normalizeint(ok, this.dam, 0, 3);
+            VM35Voice.normalizeint(ok, this.dvb, 0, 3);
+            VM35Voice.normalizeint(ok, this.fb, 0, 7);
+            VM35Voice.normalizeint(ok, this.ws, 0, 31);
+            // TODO User waveform warning
+            return ok[0];
+        }
     }
 
     private static final Logger logger = getLogger(VM35FMVoice.class.getName());
@@ -200,7 +222,7 @@ public class VM35FMVoice implements VM35Voice {
     public Algorithm alg;
 
     //`json:"operators"`
-    VM35FMOperator[] operators = new VM35FMOperator[4];
+    public List<VM35FMOperator> operators = new ArrayList<>(4);
 
     public VM35FMVoice() {}
 
@@ -228,7 +250,7 @@ public class VM35FMVoice implements VM35Voice {
             case VM35FMVoiceVersion_VM3Exclusive:
                 //    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
                 // ------------------------------------ Global
-                // +0 |       |PN4|LF1|SR3|RR3|AR3|TL5|  // bit0-3は1つ次のOpに作用
+                // +0 |       |PN4|LF1|SR3|RR3|AR3|TL5|  // Bits 0-3 affect the next Op
                 // +1 |                               |  // Drumkey?
                 // +2 | - |   PAN0123     |       | ? |
                 // +3 | - |LF0|P E|       |    alg    |
@@ -237,7 +259,7 @@ public class VM35FMVoice implements VM35Voice {
                 // +5 | - |   RR012   |      D R      |
                 // +6 | - |   AR012   |      S L      |
                 // +7 | - |      TL01234      |  ksl  |
-                // +8 |   -   |ML3|WS4|SR3|RR3|AR3|TL5|  // bit0-3は1つ次のOpに作用
+                // +8 |   -   |ML3|WS4|SR3|RR3|AR3|TL5|  // Bits 0-3 affect the next Op
                 // +9 | - |  dam  |eam| - |  dvb  |evb|
                 // +A | - |  MUL012   | - |    DT     |
                 // +B | - |     WS0123    |    fb     |
@@ -298,15 +320,15 @@ public class VM35FMVoice implements VM35Voice {
         this.lfo = global[2] >> 6 & 3;
         this.pe = (global[2] & 0x20) != 0;
         this.alg = Algorithm.values()[global[2] & 7];
-        this.operators = new VM35FMOperator[4];
+        this.operators = new ArrayList<>(4);
         var n = this.alg.operatorCount();
         for (var op = 0; op < 4; op++) {
-            this.operators[op] = new VM35FMOperator();
-            this.operators[op].version = this.version;
-            this.operators[op].num = op;
+            this.operators.set(op, new VM35FMOperator());
+            this.operators.get(op).version = this.version;
+            this.operators.get(op).num = op;
         }
         for (var op = 0; op < n; op++) {
-            this.operators[op].Read(rdr, rest);
+            this.operators.get(op).Read(rdr, rest);
         }
     }
 
@@ -314,9 +336,9 @@ public class VM35FMVoice implements VM35Voice {
     public void readUnusedRest(DataInputStream rdr, int[] rest) throws IOException {
         var n = this.alg.operatorCount();
         for (var op = n; op < 4; op++) {
-            this.operators[op] = new VM35FMOperator();
-            this.operators[op].num = op;
-            this.operators[op].Read(rdr, rest);
+            this.operators.set(op, new VM35FMOperator());
+            this.operators.get(op).num = op;
+            this.operators.get(op).Read(rdr, rest);
         }
     }
 
@@ -335,7 +357,7 @@ public class VM35FMVoice implements VM35Voice {
             n = this.alg.operatorCount();
         }
         for (var op = 0; op < n; op++) {
-            b.writeBytes(this.operators[op].Bytes(forYMF825));
+            b.writeBytes(this.operators.get(op).Bytes(forYMF825));
         }
         return b.toByteArray();
     }
@@ -361,7 +383,7 @@ public class VM35FMVoice implements VM35Voice {
         //s.add(enigma1: 0x%04X".formatted(this.enigma1));
         //s.add(Enigma2: 0x%08X".formatted(this.Enigma2));
         for (var op = 0; op < this.alg.operatorCount(); op++) {
-            s.add(this.operators[op].toString());
+            s.add(this.operators.get(op).toString());
         }
         s.add("Raw=" + hex(this.toBytes(false, false)));
         return String.join("\n", s);
@@ -374,10 +396,10 @@ public class VM35FMVoice implements VM35Voice {
             panpot = Panpot_Center;
             bo = BasicOctave_Normal;
             alg = Algorithm.values()[0];
-            operators = new VM35FMOperator[4];
+            operators = new ArrayList<>(4);
         }};
         for (var i = 0; i < 4; i++) {
-            this.operators[i] = new VM35FMOperator();
+            this.operators.set(i, new VM35FMOperator());
         }
         var op1 = new VM35FMOperator() {{
             multi = Multiplier.values()[1];
@@ -387,7 +409,42 @@ public class VM35FMVoice implements VM35Voice {
             sl = 8;
             rr = 8;
         }};
-        this.operators[1] = op1;
+        this.operators.set(1, op1);
         return v;
+    }
+
+    // Normalize removes outliers from the timbre data and normalizes it.
+    // Returns true if the tone was normal to begin with.
+    boolean /* voice *VM35FMVoice */ normalize() {
+        var ok = new boolean[] {true};
+        VM35Voice.normalizeint(ok, this.drumKey.ordinal(), 0, 127);
+        VM35Voice.normalizeint(ok, this.panpot.ordinal(), 0, 31);
+        VM35Voice.normalizeint(ok, this.bo.ordinal(), 0, 3);
+        VM35Voice.normalizeint(ok, this.lfo, 0, 3);
+        VM35Voice.normalizeint(ok, this.alg.operatorCount(), 0, 7);
+        var ops = 4;
+        if (this.alg.ordinal() < 2) {
+            ops = 2;
+        }
+        while (this.operators.size() < ops) {
+            this.operators.add(new VM35FMOperator());
+            ok[0] = false;
+        }
+        if (ops < this.operators.size()) {
+            this.operators = this.operators.subList(0, ops);
+            ok[0] = false;
+        }
+        for (var i = 0; i < this.operators.size(); i++) {
+            var op = this.operators.get(i);
+            if (op == null) {
+                op = new VM35FMOperator();
+                this.operators.set(i, op);
+                ok[0] = false;
+            }
+            if (!op.Normalize()) {
+                ok[0] = false;
+            }
+        }
+        return ok[0];
     }
 }

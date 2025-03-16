@@ -17,6 +17,9 @@ import static java.lang.System.getLogger;
 import static vavi.sound.yamaha.smaf.util.TextUtil.zeroPadSliceToString;
 
 
+/**
+ * Represents .vma voice lib file.
+ */
 public class VMAVoiceLib implements VoiceLib {
 
     private static final Logger logger = getLogger(VMAVoiceLib.class.getName());

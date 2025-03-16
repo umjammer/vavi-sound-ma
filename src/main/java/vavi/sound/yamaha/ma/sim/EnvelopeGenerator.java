@@ -185,12 +185,12 @@ public class EnvelopeGenerator {
     }
 
     /**
-     * DR/SR/RR=4 における共通の減衰速度 [振幅dB/sec]
-     * ・使用時は2で割ってエネルギーdBに変換
-     * ・DR/SR/RR が1増えると速度は2倍になる
+     * Common decay rate at DR/SR/RR=4 [amplitude dB/sec]
+     * - When in use, divide by 2 to convert to energy dB
+     * - When DR/SR/RR increases by 1, the speed doubles
      */
     static final double[][] decayDBPerSecAt4 = {
-            // 添字は keyScaleNumber (0..15)
+            // The index is keyScaleNumber (0..15)
             {17.9342, 17.9342, 17.9342, 17.9342, 17.9342, 22.4116, 22.4116, 22.4116, 22.4116, 26.9076, 26.9076, 26.9076, 26.9076, 31.3661, 31.3661, 31.3661},      // KSR=0
             {17.9465, 22.4376, 22.4376, 31.4026, 31.4026, 44.8696, 44.8696, 62.7959, 62.7959, 89.6707, 89.6707, 125.5546, 125.5546, 179.2684, 179.2684, 250.9128}, // KSR=1
     };

@@ -46,7 +46,7 @@ public class PhaseGenerator {
 
         this.phaseIncrementFrac64 = floatToFrac64(operatorFrequency / this.sampleRate);
 
-        // 端数切り捨て後に掛けないとオペレータ間でズレる
+        // If you do not round down the decimals before multiplying, there will be discrepancies between operators.
         this.phaseIncrementFrac64 = mulUint64(this.phaseIncrementFrac64, MultTable2[mult]);
         this.phaseIncrementFrac64 >>= 1;
     }
