@@ -4,8 +4,12 @@
 
 package vavi.sound.yamaha.ma.sim;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+import java.util.Arrays;
 import vavi.sound.yamaha.ma.sim.EnvelopeGenerator.Stage;
 
+import static java.lang.System.getLogger;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.CarrierMatrix;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.LFOFrequency;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.ModTableIndexShift;
@@ -95,6 +99,8 @@ import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.VolumeTable;
  */
 public class Channel {
 
+    private static final Logger logger = getLogger(Channel.class.getName());
+
     static final int noModulator = 0;
 
     int channelID;
@@ -141,7 +147,7 @@ public class Channel {
         this.feedbackBlendPrev = 1.0 - this.feedbackBlendCurr;
 
         for (var i = 0; i < this.operators.length; i++) {
-            this.operators[i] = new Operator(channelID, i++, chip);
+            this.operators[i] = new Operator(channelID, i, chip);
         }
 
         this.resetAll();

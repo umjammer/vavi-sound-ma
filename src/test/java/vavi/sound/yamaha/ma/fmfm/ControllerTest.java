@@ -14,6 +14,7 @@ import vavi.sound.yamaha.ma.sim.Chip;
 import vavi.sound.yamaha.ma.sim.Registers;
 import vavi.sound.yamaha.ma.ymf.Register.ChRegister;
 import vavi.sound.yamaha.ma.ymf.Register.OpRegister;
+import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -97,6 +98,7 @@ public class ControllerTest {
 		var regs = new Registers(new Chip(44100, 0, 0));
 		var ctrl = new Controller(new ControllerOpts() {{
 			registers = regs;
+			library = new VM5VoiceLib();
 		}});
 		var fnumPrev = 300;
 		for (var i = 0; i < 12; i++) {

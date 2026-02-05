@@ -19,6 +19,7 @@ import vavi.sound.yamaha.smaf.enums.Enums.Multiplier;
 import vavi.sound.yamaha.smaf.enums.Enums.Panpot;
 import vavi.sound.yamaha.smaf.enums.Enums.VoiceType;
 import vavi.sound.yamaha.smaf.voice.VM35FMVoice;
+import vavi.sound.yamaha.smaf.voice.VM35FMVoice.VM35FMOperator;
 import vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion;
 import vavi.sound.yamaha.smaf.voice.VM35VoicePC;
 import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
@@ -63,40 +64,36 @@ import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM35FMVo
 
 public class Controller {
 
-    VM35VoicePC defaultPC;
+    static final VM35VoicePC defaultPC;
 
-    public Controller() {
+    static {
         defaultPC = new VM35VoicePC();
         defaultPC.version = VM35FMVoiceVersion.values()[VM35FMVoiceVersion_VM5.ordinal()];
         defaultPC.name = "default";
         defaultPC.voiceType = VoiceType.values()[VoiceType_FM.ordinal()];
-        defaultPC.voice = new VM35FMVoice() {{
-            this.panpot = Panpot.Panpot15;
-            this.bo = BasicOctave.BasicOctave_Normal;
-            this.alg = Algorithm.A0;
-            this.lfo = 2;
-            this.operators = List.of(
-                    new VM35FMVoice.VM35FMOperator() {{
-                            multi = Multiplier.Multiplier1;
-                            ar = 15;
-                            dr = 4;
-                            sl = 15;
-                            rr = 12;
-                            tl = 12;
-                            ksl = 2;
-                            dvb = 3;
-                        }
-                    },
-                    new VM35FMOperator() {{
-                        multi = Multiplier.Multiplier1;
-                            ar = 15;
-                            rr = 12;
-                            dvb = 3;
-                        }
-                    }
-            );
-        }};
+        defaultPC.voice = new VM35FMVoice();
+        ((VM35FMVoice) defaultPC.voice).panpot = Panpot.Panpot15;
+        ((VM35FMVoice) defaultPC.voice).bo = BasicOctave.BasicOctave_Normal;
+        ((VM35FMVoice) defaultPC.voice).alg = Algorithm.A0;
+        ((VM35FMVoice) defaultPC.voice).lfo = 2;
+        VM35FMVoice.VM35FMOperator op1 = new VM35FMVoice.VM35FMOperator();
+        op1.multi = Multiplier.Multiplier1;
+        op1.ar = 15;
+        op1.dr = 4;
+        op1.sl = 15;
+        op1.rr = 12;
+        op1.tl = 12;
+        op1.ksl = 2;
+        op1.dvb = 3;
+        VM35FMOperator op2 = new VM35FMOperator();
+        op2.multi = Multiplier.Multiplier1;
+        op2.ar = 15;
+        op2.rr = 12;
+        op2.dvb = 3;
+        ((VM35FMVoice) defaultPC.voice).operators = List.of(op1, op2);
     }
+
+    public Controller() {}
 
     // MIDIMessage is an enumeration type that represents a type of MIDI message.
     public enum MIDIMessage {
@@ -195,7 +192,7 @@ public class Controller {
         protected boolean muteIfPCNotFound;
         protected boolean forceMono;
         protected boolean printStatus;
-        public List<Integer> ignoreMIDIChannels;
+        public List<Integer> ignoreMIDIChannels = new ArrayList<>();
         protected int soloMIDIChannel;
     }
 
@@ -206,7 +203,7 @@ public class Controller {
     boolean muteIfPCNotFound;
     boolean forceMono;
     boolean debugPrintStatus;
-    Map<Integer, Object> ignoreMIDIChannels;
+    Map<Integer, Object> ignoreMIDIChannels = new HashMap<>();
     int soloMIDIChannel;
     List<midiMessage> midiMessages;
 
@@ -693,7 +690,7 @@ public class Controller {
 
 	VM35VoicePC getInstrument(int midich, int note) {
         var s = this.midiChannelStates[midich];
-        var result = this.library.Get(s.bankMSB, s.bankLSB, s.pc, note);
+        var result = this.library.get(s.bankMSB, s.bankLSB, s.pc, note);
         if (!this.muteIfPCNotFound) {
             result = defaultPC;
         }

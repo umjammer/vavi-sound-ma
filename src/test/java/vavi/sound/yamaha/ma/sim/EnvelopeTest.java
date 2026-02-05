@@ -6,7 +6,7 @@ package vavi.sound.yamaha.ma.sim;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.SampleRate;
 
 
@@ -57,7 +57,7 @@ class EnvelopeTest {
 			result[ksr] = r;
 		}
 
-		assertEquals(new double[][] {
+		assertArrayEquals(new double[][] {
 			{17, 17, 17, 17, 17, 22, 22, 22, 22, 26, 26, 26, 26, 31, 31, 31},
 			{17, 22, 22, 31, 31, 44, 44, 62, 62, 89, 89, 125, 125, 179, 179, 250},
 		}, result);

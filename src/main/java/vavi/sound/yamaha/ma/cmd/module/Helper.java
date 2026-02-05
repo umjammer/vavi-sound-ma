@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 public class Helper {
 
-    static native void _set_longlong_array(long out[], int i, long v);
+    static native void _set_longlong_array(long[] out, int i, long v);
     static native void _set_uchar_array(byte[] out, int i, byte v);
 
     public static int[] collectInts(Supplier<List<Integer>> fn) {

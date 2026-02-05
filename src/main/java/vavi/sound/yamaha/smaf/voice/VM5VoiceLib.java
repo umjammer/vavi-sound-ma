@@ -105,7 +105,8 @@ public class VM5VoiceLib implements VoiceLib {
     }
 
     // Get retrieves tone data.
-    public VM35VoicePC Get(int msb, int lsb, int pc, int note) {
+    public VM35VoicePC get(int msb, int lsb, int pc, int note) {
+logger.log(Level.INFO, "programs: " + this.programs.size());
         for (var p : this.programs) {
             if (!(p.pc == pc && p.bankLSB == lsb && p.bankMSB == msb)) {
                 continue;
@@ -118,17 +119,17 @@ public class VM5VoiceLib implements VoiceLib {
         return defaultPC;
     }
 
-    public static VM35VoicePC defaultPC = new VM35VoicePC() {
-        {
-            version = VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
-            name = "default";
-            voiceType = VoiceType.VoiceType_FM;
-            voice = new VM35FMVoice() {{
-                panpot = Panpot.Panpot15;
-                bo = BasicOctave.BasicOctave_Normal;
-                alg = Algorithm.A1;
-                operators = new ArrayList<>();
-            }};
-        }
-    };
+    public static final VM35VoicePC defaultPC;
+
+    static {
+        defaultPC = new VM35VoicePC();
+        defaultPC.version = VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
+        defaultPC.name = "default";
+        defaultPC.voiceType = VoiceType.VoiceType_FM;
+        defaultPC.voice = new VM35FMVoice();
+        ((VM35FMVoice) defaultPC.voice).panpot = Panpot.Panpot15;
+        ((VM35FMVoice) defaultPC.voice).bo = BasicOctave.BasicOctave_Normal;
+        ((VM35FMVoice) defaultPC.voice).alg = Algorithm.A1;
+        ((VM35FMVoice) defaultPC.voice).operators = new ArrayList<>();
+    }
 }
