@@ -116,7 +116,7 @@ logger.log(Level.INFO, "programs: " + this.programs.size());
             }
             return p;
         }
-        return defaultPC;
+        return null;
     }
 
     public static final VM35VoicePC defaultPC;

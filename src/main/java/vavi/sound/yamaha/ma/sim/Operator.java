@@ -92,7 +92,7 @@ class Operator {
         var phase = pg.phaseFrac64 >> WaveformIndexShift;
         byte[] phstr = ("        ").getBytes();
         phstr[(int) (phase >> (WaveformLenBits - 3))] = '|';
-        return "%d: %s mul=%02d ws=%02d adssr=%02d,%02d,%02d,%02d,%02d tl=%f am=%s vb=%s dt=%d ksr=%d fb=%3.2f ksn=%02d ksl=%f st=%s ph=%s lv=%03d %s".formatted(
+        return "%d: %s mul=%02d ws=%02d adssr=%02d,%02d,%02d,%02d,%02d tl=%f am=%s vb=%s dt=%d ksr=%d fb=%3.2f ksn=%02d ksl=%f st=%s ph=%s lv=%-03d %s".formatted(
                 this.operatorIndex,
                 cm,
                 this.mult,
@@ -125,7 +125,7 @@ class Operator {
                 // this.bo,
                 // this.xof,
                 eg.stage,
-                Arrays.toString(phstr),
+                new String(phstr),
                 (int) (Math.floor(lvdb)),
                 lvstr
         );
@@ -218,7 +218,7 @@ class Operator {
         }
         var envelope = this.envelopeGenerator.getEnvelope(modIndex);
 
-        var sampleIndex = (long) (phaseFrac64) >> WaveformIndexShift;
+        var sampleIndex = (long) (phaseFrac64) >>> WaveformIndexShift;
         sampleIndex += (long) ((modulator + WaveformLen) * WaveformLen);
         return Waveforms[this.ws][(int) (sampleIndex & 1023)] * envelope;
     }

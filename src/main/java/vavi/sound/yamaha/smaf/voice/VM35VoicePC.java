@@ -120,8 +120,8 @@ public class VM35VoicePC {
         }
     }
 
-    boolean isForDrum() {
-        return this.drumNote.ordinal() != 0;
+    public boolean isForDrum() {
+        return this.drumNote != null && this.drumNote.ordinal() != 0;
     }
 
     @Override

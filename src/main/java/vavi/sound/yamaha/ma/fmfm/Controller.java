@@ -361,6 +361,9 @@ public class Controller {
         }
 
         var instr = this.getInstrument(midich, note);
+        if (instr == null) {
+            return;
+        }
 
         if (instr.voiceType.ordinal() != VoiceType_FM.ordinal()) {
             System.out.printf("unsupported voice type: @%d-%d-%d note=%d type=%s\n", instr.bankMSB, instr.bankLSB, instr.pc, note, instr.voiceType);
@@ -368,7 +371,7 @@ public class Controller {
         }
 
         var chipch = -1;
-        if (this.midiChannelStates[midich].mono || this.forceMono && instr.drumNote == null) {
+        if (this.midiChannelStates[midich].mono || this.forceMono && !instr.isForDrum()) {
             chipch = this.findLastUsedChipChannel(midich, note);
         }
         if (chipch < 0) {
@@ -555,8 +558,8 @@ public class Controller {
         chipState.time = Instant.now();
 
         chipState.finetune = 0;
-        if (instr.drumNote != null) {
-            note = (int) (((VM35FMVoice) instr.voice).drumKey.ordinal());
+        if (instr.isForDrum()) {
+            note = ((VM35FMVoice) instr.voice).drumKey.ordinal();
         }
         chipState.pitch = chipState.finetune + (int) (midiState.pitch);
         chipState.instrument = instr;
@@ -614,7 +617,7 @@ public class Controller {
     int findLastUsedChipChannel(int midich, int note) {
         var now = Instant.now();
         var found = -1;
-        var minDelta = Long.MIN_VALUE;
+        var minDelta = Long.MAX_VALUE;
         for (var i = 0; i < this.chipChannelStates.length; i++){
             var state = this.chipChannelStates[i];
             if (state.midiChannel != midich) {
@@ -688,15 +691,14 @@ public class Controller {
         return -1;
     }
 
-	VM35VoicePC getInstrument(int midich, int note) {
-        var s = this.midiChannelStates[midich];
-        var result = this.library.get(s.bankMSB, s.bankLSB, s.pc, note);
-        if (!this.muteIfPCNotFound) {
-            result = defaultPC;
-        }
-        return result;
-    }
-
+	    VM35VoicePC getInstrument(int midich, int note) {
+	        var s = this.midiChannelStates[midich];
+	        var result = this.library.get(s.bankMSB, s.bankLSB, s.pc, note);
+	        if (result == null && !this.muteIfPCNotFound) {
+	            result = defaultPC;
+	        }
+	        return result;
+	    }
     void resetMIDIChannel(int midich) {
         this.midiChannelStates[midich].volume = 100;
         this.midiChannelStates[midich].expression = 127;

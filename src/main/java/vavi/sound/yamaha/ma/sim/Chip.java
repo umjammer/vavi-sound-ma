@@ -83,4 +83,8 @@ public class Chip {
             this.channels[i] = new Channel(i, this);
         }
     }
+
+    public Channel[] getChannels() {
+        return channels;
+    }
 }

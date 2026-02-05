@@ -499,4 +499,8 @@ public class Channel {
             op.setFrequency(this.fnum, this.block, this.bo);
         }
     }
+
+    public int getFNum() {
+        return fnum;
+    }
 }
