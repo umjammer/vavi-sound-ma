@@ -242,3 +242,6 @@ xcuserdata/
 
 
 # End of https://www.gitignore.io/api/osx,windows,code,intellij,go,c,c++,xcode
+tmp/
+local.properties
+GEMINI.md

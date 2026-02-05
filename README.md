@@ -11,6 +11,11 @@
 
 this is a fork of [fmfm.core](https://github.com/but80/fmfm.core).
 
+### sample of
+
+ * ~~protbuf, maven plugin~~
+ * jazzer junit5
+
 ## Install
 
 * [maven](https://jitpack.io/#umjammer/vavi-sound-ma)
@@ -19,13 +24,23 @@ this is a fork of [fmfm.core](https://github.com/but80/fmfm.core).
 
 ## References
 
-* [original](https://github.com/but80/fmfm.core)
-* https://github.com/madscient/FITOMApp/blob/dbb7c257e78916dc5efb0a0c4d2b808f195b5a05/FITOM_config/Program.cs#L113
-* https://github.com/jcrona/rovio-fw/tree/b0523c01b0d562b91842f35036ae608a60f81571/Host/Audio/Inc
+* Yamaha
+  * [original](https://github.com/but80/fmfm.core)
+  * https://github.com/madscient/FITOMApp/blob/dbb7c257e78916dc5efb0a0c4d2b808f195b5a05/FITOM_config/Program.cs#L113
+  * https://github.com/denjhang/MA-3-MegaMod
+  * https://github.com/GillesLACAUD/OPLA-Source-code
+  * https://github.com/vampirefrog/fmtoy
+  * https://github.com/soywiz-archive/jdosbox (opl series)
+  * https://github.com/jcrona/rovio-fw (ma series controller side)
+  * https://github.com/tillt/retrocode (smaf)
+  * https://moddingwiki.shikadi.net/wiki/IBK_Format
+
+* ProtoBuffer
+  * https://github.com/protostuff/protostuff
 
 ### License
 
-MIT License
+[MIT License](LICENSE)
 
 ## TODO
 
@@ -34,3 +49,4 @@ MIT License
   - MIDI vibrato resolution
   - Channel pan resolution
   - Channel pan and voice pan blending
+- soundfont reader 
