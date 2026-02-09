@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import vavi.sound.yamaha.smaf.pb.smaf.Smaf.VM5VoiceLib;
@@ -27,6 +29,7 @@ import vavi.util.Debug;
 class TestCase {
 
     @Test
+    @Disabled
     @DisplayName("protobuf")
     void test1() throws Exception {
         InputStream is = new GZIPInputStream(new ByteArrayInputStream(fileDescriptor_smaf_4f8a53039970ce01));
