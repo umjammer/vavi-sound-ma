@@ -9,7 +9,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
@@ -27,4 +27,6 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn -B -P protobuf package --file pom.xml
+        run: |
+            brew install protobuf
+            mvn -B -P protobuf package --file pom.xml
