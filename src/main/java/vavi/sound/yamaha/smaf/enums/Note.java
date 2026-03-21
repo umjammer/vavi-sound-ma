@@ -24,26 +24,29 @@ import static java.lang.System.getLogger;
  *	|A#3	|466.2	|4	|637|
  *	|B3		|493.9	|4	|674|
  */
-public enum Note {
-    C("C"),
-    C_Sherp("C#"),
-    D("D"),
-    D_Sherp("D#"),
-    E("E"),
-    F("F"),
-    F_Sherp("F#"),
-    G("G"),
-    G_Sherp("G#"),
-    A("A"),
-    A_Sherp("A#"),
-    B("B");
+public class Note {
 
     private static final Logger logger = getLogger(Note.class.getName());
 
-    final String s;
+    String[] noteNames = {
+            "C",
+            "C#",
+            "D",
+            "D#",
+            "E",
+            "F",
+            "F#",
+            "G",
+            "G#",
+            "A",
+            "A#",
+            "B"
+    };
 
-    Note(String s) {
-        this.s = s;
+    public final int note;
+
+    public Note(int note) {
+        this.note = note;
     }
 
     static class NoteFreq {
@@ -56,19 +59,18 @@ public enum Note {
 
     @Override
     public String toString() {
-        return "%s(%d)".formatted(name(), ordinal());
+        return "%s(%d)".formatted(name(), note);
     }
 
-    String Name() {
-        var i = ordinal();
-        return "%s%d".formatted(name(), i / 12 - 1);
+    public String name() {
+        return "%s%d".formatted(noteNames[note % 12], note / 12 - 1);
     }
 
     static final double fNumK = Math.pow(2.0, 19.0) / 48000.0 / 2.0;
 
     NoteFreq freq(double delta) {
-        var f = 440 * Math.pow(2.0, ((double) (ordinal() - Note_A3) + delta) / 12.0);
-        var block = ordinal() / 12;
+        var f = 440 * Math.pow(2.0, ((double) (note - Note_A3) + delta) / 12.0);
+        var block = note / 12;
         if (block < 0) {
             block = 0;
         } else if (7 < block) {

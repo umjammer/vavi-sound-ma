@@ -4,8 +4,6 @@
 
 package vavi.sound.yamaha.ma.sim;
 
-import java.util.Arrays;
-
 import vavi.sound.yamaha.ma.sim.EnvelopeGenerator.Stage;
 
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.FeedbackTable;
@@ -213,7 +211,7 @@ class Operator {
 
     double next(int modIndex, double modulator) {
         var phaseFrac64 = this.phaseGenerator.getPhase(modIndex);
-        if (this.envelopeGenerator.stage == Stage.stageOff) {
+        if (this.envelopeGenerator.stage == Stage.Off) {
             return 0;
         }
         var envelope = this.envelopeGenerator.getEnvelope(modIndex);
@@ -227,7 +225,7 @@ class Operator {
         if (0 < this.ar) {
             this.envelopeGenerator.keyOn();
         } else {
-            this.envelopeGenerator.stage = Stage.stageOff;
+            this.envelopeGenerator.stage = Stage.Off;
         }
     }
 

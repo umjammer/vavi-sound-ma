@@ -82,7 +82,7 @@ public class TextUtil {
         return result;
     }
 
-    // Helper method to replace escaped characters
+    /** Helper method to replace escaped characters */
     private static String unescapeValue(String value) {
         return splitOptionalDataRe2.matcher(value).replaceAll(matchResult ->
                 matchResult.group().substring(1)

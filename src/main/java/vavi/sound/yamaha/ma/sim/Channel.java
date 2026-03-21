@@ -5,8 +5,7 @@
 package vavi.sound.yamaha.ma.sim;
 
 import java.lang.System.Logger;
-import java.lang.System.Logger.Level;
-import java.util.Arrays;
+
 import vavi.sound.yamaha.ma.sim.EnvelopeGenerator.Stage;
 
 import static java.lang.System.getLogger;
@@ -194,7 +193,7 @@ public class Channel {
             if ((!CarrierMatrix[this.alg][i++])) {
                 continue;
             }
-            if ((op.envelopeGenerator.stage != Stage.stageOff)) {
+            if ((op.envelopeGenerator.stage != Stage.Off)) {
                 return false;
             }
         }
@@ -367,7 +366,7 @@ public class Channel {
 
             case 0:
                 // (FB)1 -> 2 -> OUT
-                if (op2.envelopeGenerator.stage == Stage.stageOff) {
+                if (op2.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 
@@ -378,7 +377,7 @@ public class Channel {
             case 1:
                 // (FB)1 -> | -> OUT
                 //     2 -> |
-                if (op1.envelopeGenerator.stage == Stage.stageOff && op2.envelopeGenerator.stage == Stage.stageOff) {
+                if (op1.envelopeGenerator.stage == Stage.Off && op2.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 
@@ -392,10 +391,10 @@ public class Channel {
                 //     2 -> |
                 // (FB)3 -> |
                 //     4 -> |
-                if (op1.envelopeGenerator.stage == Stage.stageOff &&
-                        op2.envelopeGenerator.stage == Stage.stageOff &&
-                        op3.envelopeGenerator.stage == Stage.stageOff &&
-                        op4.envelopeGenerator.stage == Stage.stageOff) {
+                if (op1.envelopeGenerator.stage == Stage.Off &&
+                        op2.envelopeGenerator.stage == Stage.Off &&
+                        op3.envelopeGenerator.stage == Stage.Off &&
+                        op4.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 
@@ -409,7 +408,7 @@ public class Channel {
             case 3:
                 // (FB)OP1 --------> | -> OP4 -> OUT
                 //     OP2 -> OP3 -> |
-                if (op4.envelopeGenerator.stage == Stage.stageOff) {
+                if (op4.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 
@@ -421,7 +420,7 @@ public class Channel {
 
             case 4:
                 // (FB)OP1 -> OP2 -> OP3 -> OP4 -> OUT
-                if (op4.envelopeGenerator.stage == Stage.stageOff) {
+                if (op4.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 
@@ -434,7 +433,7 @@ public class Channel {
             case 5:
                 // (FB)OP1 -> OP2 -> | -> OUT
                 // (FB)OP3 -> OP4 -> |
-                if (op2.envelopeGenerator.stage == Stage.stageOff && op4.envelopeGenerator.stage == Stage.stageOff) {
+                if (op2.envelopeGenerator.stage == Stage.Off && op4.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 
@@ -449,7 +448,7 @@ public class Channel {
             case 6:
                 // (FB)OP1 ---------------> | -> OUT
                 //     OP2 -> OP3 -> OP4 -> |
-                if (op1.envelopeGenerator.stage == Stage.stageOff && op4.envelopeGenerator.stage == Stage.stageOff) {
+                if (op1.envelopeGenerator.stage == Stage.Off && op4.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 
@@ -464,9 +463,9 @@ public class Channel {
                 // (FB)OP1 --------> | -> OUT
                 //     OP2 -> OP3 -> |
                 //     OP4 --------> |
-                if (op1.envelopeGenerator.stage == Stage.stageOff &&
-                        op3.envelopeGenerator.stage == Stage.stageOff &&
-                        op4.envelopeGenerator.stage == Stage.stageOff) {
+                if (op1.envelopeGenerator.stage == Stage.Off &&
+                        op3.envelopeGenerator.stage == Stage.Off &&
+                        op4.envelopeGenerator.stage == Stage.Off) {
                     return new double[] {0, 0};
                 }
 

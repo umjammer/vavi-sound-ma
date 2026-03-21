@@ -90,19 +90,19 @@ public class VMAFMVoice implements VM35Voice {
             rdr.readFully(data);
             rest[0] -= data.length;
 
-            this.mult = Multiplier.values()[data[0] >> 4];
+            this.mult = Multiplier.values()[(data[0] & 0xff) >> 4];
             this.vib = (data[0] & 0x08) != 0;
             this.egt = (data[0] & 0x04) != 0;
             this.sus = (data[0] & 0x02) != 0;
             this.ksr = (data[0] & 0x01) != 0;
-            this.rr = (data[1] >> 4) & 0xff;
+            this.rr = ((data[1] & 0xff) >> 4) & 0xff;
             this.dr = (data[1] & 15) & 0xff;
-            this.ar = (data[2] >> 4) & 0xff;
+            this.ar = ((data[2] & 0xff) >> 4) & 0xff;
             this.sl = (data[2] & 15) & 0xff;
-            this.tl = (data[3] >> 2) & 0xff;
+            this.tl = ((data[3] & 0xff) >> 2) & 0xff;
             this.ksl = (data[3] & 3) & 0xff;
-            this.dvb = (data[4] >> 6 & 3);
-            this.dam = (data[4] >> 4 & 3);
+            this.dvb = ((data[4] & 0xff) >> 6 & 3);
+            this.dam = ((data[4] & 0xff) >> 4 & 3);
             this.am = (data[4] & 0x08) != 0;
             this.ws = (data[4] & 7) & 0xff;
         }
@@ -119,13 +119,13 @@ public class VMAFMVoice implements VM35Voice {
 
         @Override
         public String toString() {
-            var t = Arrays.asList(
+            var t = new ArrayList<>(Arrays.asList(
                     "ADR=%d,%d,%d".formatted(this.ar, this.dr, this.rr),
                     "sl=%d".formatted(this.sl),
                     "tl=%d".formatted(this.tl),
                     "ksl=%d".formatted(this.ksl),
                     "ws=%d".formatted(this.ws)
-            );
+            ));
             if (this.am) {
                 t.add("am=%d".formatted(this.dam));
             }
@@ -180,7 +180,7 @@ public class VMAFMVoice implements VM35Voice {
     //`json:"operators"`
     VMAFMOperator[] operators;
 
-    VMAFMVoice(byte[] data) throws IOException {
+    public VMAFMVoice(byte[] data) throws IOException {
         int[] rest = new int[] {data.length};
         var rdr = new DataInputStream(new ByteArrayInputStream(data));
         if (0 < rest[0]) {
@@ -268,9 +268,9 @@ public class VMAFMVoice implements VM35Voice {
 
     VM35FMVoice ToVM35() {
         var result = new VM35FMVoice() {{
-            drumKey = Note.values()[0];
-            panpot = Panpot.Panpot_Center;
-            bo = BasicOctave.BasicOctave_Normal;
+            drumKey = new Note(0);
+            panpot = Panpot.Center;
+            bo = BasicOctave.Normal;
             lfo = VMAFMVoice.this.lfo;
             pe = false;
             alg = VMAFMVoice.this.alg;

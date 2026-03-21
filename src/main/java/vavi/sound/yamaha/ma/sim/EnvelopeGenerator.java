@@ -11,11 +11,11 @@ import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.TremoloTable;
 public class EnvelopeGenerator {
 
     enum Stage {
-        stageOff("-"),
-        stageAttack("A"),
-        stageDecay("D"),
-        stageSustain("S"),
-        stageRelease("R");
+        Off("-"),
+        Attack("A"),
+        Decay("D"),
+        Sustain("S"),
+        Release("R");
         //default -> "?";
         final String s;
 
@@ -48,7 +48,7 @@ public class EnvelopeGenerator {
 
     void reset() {
         this.currentLevel = .0;
-        this.stage = Stage.stageOff;
+        this.stage = Stage.Off;
     }
 
     void resetAll() {
@@ -135,34 +135,34 @@ public class EnvelopeGenerator {
 
     public double getEnvelope(int tremoloIndex) {
         switch (this.stage) {
-            case stageAttack:
+            case Attack:
                 this.currentLevel += this.arDiffPerSample;
                 if (this.currentLevel < 1.0) {
                     break;
                 }
                 this.currentLevel = 1.0;
-                this.stage = Stage.stageDecay;
+                this.stage = Stage.Decay;
                 //fallthrough;
-            case stageDecay:
+            case Decay:
                 if (this.sustainLevel < this.currentLevel) {
                     this.currentLevel *= this.drCoefPerSample;
                     break;
                 }
-                this.stage = Stage.stageSustain;
+                this.stage = Stage.Sustain;
                 //fallthrough;
-            case stageSustain:
+            case Sustain:
                 if (epsilon < this.currentLevel) {
                     this.currentLevel *= this.srCoefPerSample;
                 } else {
-                    this.stage = Stage.stageOff;
+                    this.stage = Stage.Off;
                 }
                 break;
-            case stageRelease:
+            case Release:
                 if (epsilon < this.currentLevel) {
                     this.currentLevel *= this.rrCoefPerSample;
                 } else {
                     this.currentLevel = .0;
-                    this.stage = Stage.stageOff;
+                    this.stage = Stage.Off;
                 }
                 break;
         }
@@ -175,12 +175,12 @@ public class EnvelopeGenerator {
     }
 
     public void keyOn() {
-        this.stage = Stage.stageAttack;
+        this.stage = Stage.Attack;
     }
 
     public void keyOff() {
-        if (this.stage != Stage.stageOff) {
-            this.stage = Stage.stageRelease;
+        if (this.stage != Stage.Off) {
+            this.stage = Stage.Release;
         }
     }
 

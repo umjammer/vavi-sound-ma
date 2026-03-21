@@ -58,8 +58,8 @@ import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.A3Note;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.CarrierMatrix;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.ChannelCount;
 import static vavi.sound.yamaha.ma.ymf.ymfdata.Data.FNUMCoef;
-import static vavi.sound.yamaha.smaf.enums.Enums.VoiceType.VoiceType_FM;
-import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
+import static vavi.sound.yamaha.smaf.enums.Enums.VoiceType.FM;
+import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM5;
 
 
 public class Controller {
@@ -68,16 +68,16 @@ public class Controller {
 
     static {
         defaultPC = new VM35VoicePC();
-        defaultPC.version = VM35FMVoiceVersion.values()[VM35FMVoiceVersion_VM5.ordinal()];
+        defaultPC.version = VM35FMVoiceVersion.values()[VM5.ordinal()];
         defaultPC.name = "default";
-        defaultPC.voiceType = VoiceType.values()[VoiceType_FM.ordinal()];
+        defaultPC.voiceType = VoiceType.values()[FM.ordinal()];
         defaultPC.voice = new VM35FMVoice();
-        ((VM35FMVoice) defaultPC.voice).panpot = Panpot.Panpot15;
-        ((VM35FMVoice) defaultPC.voice).bo = BasicOctave.BasicOctave_Normal;
+        ((VM35FMVoice) defaultPC.voice).panpot = Panpot._15;
+        ((VM35FMVoice) defaultPC.voice).bo = BasicOctave.Normal;
         ((VM35FMVoice) defaultPC.voice).alg = Algorithm.A0;
         ((VM35FMVoice) defaultPC.voice).lfo = 2;
         VM35FMVoice.VM35FMOperator op1 = new VM35FMVoice.VM35FMOperator();
-        op1.multi = Multiplier.Multiplier1;
+        op1.multi = Multiplier._1;
         op1.ar = 15;
         op1.dr = 4;
         op1.sl = 15;
@@ -86,7 +86,7 @@ public class Controller {
         op1.ksl = 2;
         op1.dvb = 3;
         VM35FMOperator op2 = new VM35FMOperator();
-        op2.multi = Multiplier.Multiplier1;
+        op2.multi = Multiplier._1;
         op2.ar = 15;
         op2.rr = 12;
         op2.dvb = 3;
@@ -95,18 +95,18 @@ public class Controller {
 
     public Controller() {}
 
-    // MIDIMessage is an enumeration type that represents a type of MIDI message.
+    /** MIDIMessage is an enumeration type that represents a type of MIDI message. */
     public enum MIDIMessage {
-        // MIDINoteOn is an enumerator that represents the MIDI message type NoteOn.
-        MIDINoteOn(1),
-        // MIDINoteOff is an enumerator that represents the MIDI message type NoteOff.
-        MIDINoteOff(2),
-        // MIDIControlChange is an enumerator that represents the MIDI message type ControlChange.
-        MIDIControlChange(3),
-        // MIDIProgramChange is an enumerator that represents the MIDI message type ProgramChange.
-        MIDIProgramChange(4),
-        // MIDIPitchBend is an enumerator that represents the MIDI message type PitchBend.
-        MIDIPitchBend(5);
+        /** NoteOn is an enumerator that represents the MIDI message type NoteOn. */
+        NoteOn(1),
+        /** NoteOff is an enumerator that represents the MIDI message type NoteOff. */
+        NoteOff(2),
+        /** ControlChange is an enumerator that represents the MIDI message type ControlChange. */
+        ControlChange(3),
+        /** ProgramChange is an enumerator that represents the MIDI message type ProgramChange. */
+        ProgramChange(4),
+        /** PitchBend is an enumerator that represents the MIDI message type PitchBend. */
+        PitchBend(5);
         final int v;
 
         MIDIMessage(int v) {
@@ -123,7 +123,7 @@ public class Controller {
         int data2;
     }
 
-    //    type flag int
+    // type flag int
     static final int flagSustain = 0x02;
     static final int flagVibrato = 0x04;
     static final int flagReleased = 0x40;
@@ -184,7 +184,7 @@ public class Controller {
         VM35VoicePC debugLastInstrument;
     }
 
-    // ControllerOpts are the options for NewController .
+    /** ControllerOpts are the options for #Controller. */
     public static class ControllerOpts {
 
         public Registers registers;
@@ -210,7 +210,7 @@ public class Controller {
     midiChannelState[] midiChannelStates = new midiChannelState[16];
     chipChannelState[] chipChannelStates = new chipChannelState[ChannelCount];
 
-    // NewController creates a new Controller.
+    /** Creates a new Controller. */
     public Controller(ControllerOpts opts) {
         this.registers = opts.registers;
         this.library = opts.library;
@@ -230,11 +230,11 @@ public class Controller {
         for (var i = 0; i < this.midiChannelStates.length; i++) {
             this.midiChannelStates[i] = new midiChannelState();
         }
-        this.Reset();
+        this.reset();
     }
 
-    // PushMIDIMessage adds a MIDI message for processing.
-    public synchronized void PushMIDIMessage(MIDIMessage typ, int timestamp, int midich, int data1, int data2) {
+    /** Adds a MIDI message for processing. */
+    public synchronized void pushMIDIMessage(MIDIMessage typ, int timestamp, int midich, int data1, int data2) {
 
         var msg = new midiMessage() {{
             this.typ = typ;
@@ -261,7 +261,7 @@ public class Controller {
 
     Instant lastPrintedAt = Instant.now();
 
-    // FlushMIDIMessages processes any accumulated MIDI messages.
+    /** Processes any accumulated MIDI messages. */
     public synchronized void FlushMIDIMessages(int until) {
 
         List<midiMessage> rest = List.of();
@@ -273,15 +273,15 @@ public class Controller {
             }
             // System.out.printf("%02d: %d\n", msg.midiChannel, until - msg.timestamp)
             switch (msg.typ) {
-                case MIDINoteOn:
+                case NoteOn:
                     this.noteOn(msg.midiChannel, msg.data1, msg.data2);
-                case MIDINoteOff:
+                case NoteOff:
                     this.noteOff(msg.midiChannel, msg.data1);
-                case MIDIControlChange:
+                case ControlChange:
                     this.controlChange(msg.midiChannel, msg.data1, msg.data2);
-                case MIDIProgramChange:
+                case ProgramChange:
                     this.programChange(msg.midiChannel, msg.data1);
-                case MIDIPitchBend:
+                case PitchBend:
                     this.pitchBend(msg.midiChannel, msg.data1, msg.data2);
             }
         }
@@ -350,7 +350,7 @@ public class Controller {
         }
     }
 
-    // noteOn reproduces the behavior of a sound source when receiving a MIDI note-on.
+    /** Reproduces the behavior of a sound source when receiving a MIDI note-on. */
     void noteOn(int midich, int note, int velocity) {
         if (velocity == 0) {
             this.noteOff(midich, note);
@@ -365,7 +365,7 @@ public class Controller {
             return;
         }
 
-        if (instr.voiceType.ordinal() != VoiceType_FM.ordinal()) {
+        if (instr.voiceType.ordinal() != FM.ordinal()) {
             System.out.printf("unsupported voice type: @%d-%d-%d note=%d type=%s\n", instr.bankMSB, instr.bankLSB, instr.pc, note, instr.voiceType);
             return;
         }
@@ -384,7 +384,7 @@ public class Controller {
         }
     }
 
-    // noteOff reproduces the behavior of a sound source when receiving a MIDI note-off.
+    /** Reproduces the behavior of a sound source when receiving a MIDI note-off. */
     void noteOff(int midich, int note) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -403,7 +403,7 @@ public class Controller {
         }
     }
 
-    // controlChange reproduces the behavior of a sound source when receiving a MIDI control change.
+    /** Reproduces the behavior of a sound source when receiving a MIDI control change. */
     void controlChange(int midich, int cc, int value) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -502,7 +502,7 @@ public class Controller {
         }
     }
 
-    // programChange reproduces the behavior of a sound source when receiving a MIDI program change.
+    /** Reproduces the behavior of a sound source when receiving a MIDI program change. */
     void programChange(int midich, int pc) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -510,7 +510,7 @@ public class Controller {
         this.midiChannelStates[midich].pc = (byte) (pc);
     }
 
-    // pitchBend reproduces the behavior of a sound source when receiving MIDI pitch bend.
+    /** Reproduces the behavior of a sound source when receiving MIDI pitch bend. */
     void pitchBend(int midich, int l, int h) {
         if (this.ignoreMIDIChannels.get(midich) != null) {
             return;
@@ -528,8 +528,8 @@ public class Controller {
         }
     }
 
-    // Reset resets the state of the sound source.
-    synchronized void Reset() {
+    /** Resets the state of the sound source. */
+    synchronized void reset() {
         for (var i = 0; i < this.chipChannelStates.length; i++) {
             this.resetChipChannel(i);
         }
@@ -559,7 +559,7 @@ public class Controller {
 
         chipState.finetune = 0;
         if (instr.isForDrum()) {
-            note = ((VM35FMVoice) instr.voice).drumKey.ordinal();
+            note = ((VM35FMVoice) instr.voice).drumKey.note;
         }
         chipState.pitch = chipState.finetune + (int) (midiState.pitch);
         chipState.instrument = instr;

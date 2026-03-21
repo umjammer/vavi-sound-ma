@@ -13,19 +13,19 @@ import vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion;
 
 import static vavi.sound.yamaha.smaf.util.TextUtil.indent;
 import static vavi.sound.yamaha.smaf.voice.VM35Voice.normalizeString;
-import static vavi.sound.yamaha.smaf.voice.VM35Voice.normalizeint;
+import static vavi.sound.yamaha.smaf.voice.VM35Voice.normalizeInt;
 
 
 public class VMAVoicePC {
 
     //`json:"name"`
-    String name;
+    public String name;
     //`json:"bank"`
-    int bank;
+    public int bank;
     //`json:"pc"`
-    int pc;
+    public int pc;
     //`json:"voice"`
-    VMAFMVoice voice;
+    public VMAFMVoice voice;
 
     static class VMAVoicePCHeaderRawData {
 
@@ -75,34 +75,36 @@ public class VMAVoicePC {
             bankMSB = 0;
             bankLSB = bank;
             pc = VMAVoicePC.this.pc;
-            drumNote = Note.values()[0];
+            drumNote = new Note(0);
             enigma1 = 0;
-            voiceType = VoiceType.VoiceType_FM;
+            voiceType = VoiceType.FM;
             voice = VMAVoicePC.this.voice.ToVM35();
         }};
     }
 
-    // Normalize removes outliers from the timbre data and normalizes it.
-    // Returns true if the tone was normal to begin with.
+    /**
+     * Normalize removes outliers from the timbre data and normalizes it.
+     * Returns true if the tone was normal to begin with.
+     */
     boolean normalize() {
         var ok = new boolean[] {true};
 
         VM35VoicePC voice = this.toVM35();
         if (VM35FMVoiceVersion.values().length < voice.version.ordinal()) {
-            voice.version = VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
+            voice.version = VM35FMVoiceVersion.VM5;
             ok[0] = false;
         }
         voice.name = normalizeString(ok, voice.name, "(undefined)");
-        voice.bankMSB = normalizeint(ok, voice.bankMSB, 0, 127);
-        voice.bankLSB = normalizeint(ok, voice.bankLSB, 0, 127);
-        voice.pc = normalizeint(ok, voice.pc, 0, 127);
-        voice.drumNote = Note.values()[normalizeint(ok, voice.drumNote.ordinal(), 0, 127)];
+        voice.bankMSB = normalizeInt(ok, voice.bankMSB, 0, 127);
+        voice.bankLSB = normalizeInt(ok, voice.bankLSB, 0, 127);
+        voice.pc = normalizeInt(ok, voice.pc, 0, 127);
+        voice.drumNote = new Note(normalizeInt(ok, voice.drumNote.note, 0, 127));
         if (VoiceType.values().length < voice.voiceType.ordinal()) {
-            voice.voiceType = VoiceType.VoiceType_FM;
+            voice.voiceType = VoiceType.FM;
             ok[0] = false;
         }
         switch (voice.voiceType) {
-            case VoiceType_FM:
+            case FM:
                 if (voice.voice == null) {
                     voice.voice = new VM35FMVoice();
                     ok[0] = false;
@@ -111,7 +113,7 @@ public class VMAVoicePC {
                     ok[0] = false;
                 }
                 break;
-            case VoiceType_PCM:
+            case PCM:
                 if (voice.voice == null) {
                     voice.voice = new VM35PCMVoice();
                     ok[0] = false;
@@ -120,8 +122,8 @@ public class VMAVoicePC {
                     ok[0] = false;
                 }
                 break;
-            case VoiceType_AL:
-                voice.voiceType = VoiceType.VoiceType_FM;
+            case AL:
+                voice.voiceType = VoiceType.FM;
                 voice.voice = new VM35FMVoice();
                 ok[0] = false;
                 break;

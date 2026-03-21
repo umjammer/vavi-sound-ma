@@ -21,10 +21,10 @@ import vavi.sound.yamaha.smaf.voice.VM35FMVoice;
 import vavi.sound.yamaha.smaf.voice.VM35VoicePC;
 import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
 
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIControlChange;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOff;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOn;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIProgramChange;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.ControlChange;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.NoteOff;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.NoteOn;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.ProgramChange;
 
 
 class ChipTest {
@@ -38,7 +38,7 @@ class ChipTest {
 			pc.bankMSB = data.consumeInt();
 			pc.bankLSB = data.consumeInt();
 			pc.pc = data.consumeInt();
-			pc.drumNote = Note.values()[data.consumeInt(0, Note.values().length)];
+			pc.drumNote = new Note(data.consumeInt(0, 127));
 			pc.voiceType = VoiceType.values()[data.consumeInt(0, VoiceType.values().length)];
 			pc.voice = new VM35FMVoice();
 			((VM35FMVoice) pc.voice).alg = Algorithm.values()[data.consumeInt(0, Algorithm.values().length)];
@@ -49,7 +49,7 @@ class ChipTest {
 			var lib = new VM5VoiceLib() {{
 				programs = new ArrayList<>();
 			}};
-			lib.Normalize();
+			lib.normalize();
 
 			Executors.newSingleThreadExecutor().submit(() -> {
 				var chip = new Chip((int) sampleRate, -15.0, -1);
@@ -61,19 +61,19 @@ class ChipTest {
 				var seq = new Controller(opts);
 				chip.next();
 
-				seq.PushMIDIMessage(MIDIControlChange, 1, 0, 0, 0);
-				seq.PushMIDIMessage(MIDIControlChange, 1, 0, 32, 0);
-				seq.PushMIDIMessage(MIDIProgramChange, 1, 0, 0, 0);
+				seq.pushMIDIMessage(ControlChange, 1, 0, 0, 0);
+				seq.pushMIDIMessage(ControlChange, 1, 0, 32, 0);
+				seq.pushMIDIMessage(ProgramChange, 1, 0, 0, 0);
 				seq.FlushMIDIMessages(2);
 				chip.next();
 
-				seq.PushMIDIMessage(MIDINoteOn, 3, 0, 60, 127);
+				seq.pushMIDIMessage(NoteOn, 3, 0, 60, 127);
 				seq.FlushMIDIMessages(4);
 				for (var j = 0; j < 100; j++) {
 					chip.next();
 				}
 
-				seq.PushMIDIMessage(MIDINoteOff, 5, 0, 60, 0);
+				seq.pushMIDIMessage(NoteOff, 5, 0, 60, 0);
 				seq.FlushMIDIMessages(6);
 				for (var j = 0; j < 100; j++) {
 					chip.next();

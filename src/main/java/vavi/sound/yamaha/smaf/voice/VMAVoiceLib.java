@@ -6,6 +6,7 @@ package vavi.sound.yamaha.smaf.voice;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.file.Files;
@@ -25,7 +26,7 @@ public class VMAVoiceLib implements VoiceLib {
     private static final Logger logger = getLogger(VMAVoiceLib.class.getName());
 
     //`json:"programs"`
-    List<VMAVoicePC> programs = new ArrayList<>();
+    public List<VMAVoicePC> programs = new ArrayList<>();
 
     void read(DataInputStream rdr, int[] rest) throws IOException {
         for (var pc = 0; pc < 128 && 0 < rest[0]; pc++) {
@@ -48,8 +49,8 @@ public class VMAVoiceLib implements VoiceLib {
         return String.join("\n", this.programs.stream().map(VMAVoicePC::toString).toArray(String[]::new));
     }
 
-    VMAVoiceLib(String file) throws IOException {
-        try (var fh = new DataInputStream(Files.newInputStream(Path.of(file)))) {
+    public VMAVoiceLib(InputStream is) throws IOException {
+        try (var fh = new DataInputStream(is)) {
 
             ChunkHeader hdr = new ChunkHeader();
             hdr.read(fh);

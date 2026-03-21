@@ -22,8 +22,8 @@ import vavi.sound.yamaha.smaf.enums.Enums.Panpot;
 import vavi.sound.yamaha.smaf.enums.Note;
 
 import static java.lang.System.getLogger;
-import static vavi.sound.yamaha.smaf.enums.Enums.BasicOctave.BasicOctave_Normal;
-import static vavi.sound.yamaha.smaf.enums.Enums.Panpot.Panpot_Center;
+import static vavi.sound.yamaha.smaf.enums.Enums.BasicOctave.Normal;
+import static vavi.sound.yamaha.smaf.enums.Enums.Panpot.Center;
 import static vavi.sound.yamaha.smaf.enums.Note.Note_A3;
 import static vavi.sound.yamaha.smaf.util.BinaryUtil.boolToByte;
 import static vavi.sound.yamaha.smaf.util.BinaryUtil.bytesToInts;
@@ -37,67 +37,67 @@ public class VM35FMVoice implements VM35Voice {
 
         private static final Logger logger = getLogger(VM35FMOperator.class.getName());
 
-        // Operator number
+        /** Operator number */
         //`json:"-"`
         public int num;
-        // `json:"-"`
+        //`json:"-"`
         public VM35FMVoiceVersion version;
-        // Multiplier
+        /** Multiplier */
         //`json:"multi"`
         public Multiplier multi;
-        // Detune
+        /** Detune */
         //`json:"dt"`
         public int DT;
-        // Attack Rate
+        /** Attack Rate */
         //`json:"ar"`
         public int ar;
-        // Decay Rate
+        /** Decay Rate */
         //`json:"dr"`
         public int dr;
-        // Sustain Rate
+        /** Sustain Rate */
         //`json:"sr"`
         public int sr;
-        // Release Rate
+        /** Release Rate */
         //`json:"rr"`
         public int rr;
-        // Sustain Level
+        /** Sustain Level */
         //`json:"sl"`
         public int sl;
-        // Total Level
+        /** Total Level */
         //`json:"tl"`
         public int tl;
-        // Key Scaling Level
+        /** Key Scaling Level */
         //`json:"ksl"`
         public int ksl;
-        // Depth of am
+        /** Depth of am */
         //`json:"dam"`
         public int dam;
-        // Depth of Vibrato
+        /** Depth of Vibrato */
         //`json:"dvb"`
         public int dvb;
-        // Feedback
+        /** Feedback */
         //`json:"fb"`
         public int fb;
-        // Wave Shape
+        /** Wave Shape */
         //`json:"ws"`
         public int ws;
-        // Ignore KeyOff
+        /** Ignore KeyOff */
         //`json:"xof"`
         public boolean xof;
-        // Keep sustain rate after KeyOff (unused in YMF825)
+        /** Keep sustain rate after KeyOff (unused in YMF825) */
         //`json:"sus"`
         public boolean sus;
-        // Key Scaling Rate
+        /** Key Scaling Rate */
         //`json:"ksr"`
         public boolean ksr;
-        // Enable am
+        /** Enable am */
         //`json:"eam"`
         public boolean eam;
-        // Enable Vibrato
+        /** Enable Vibrato */
         //`json:"evb"`
         public boolean evb;
 
-        void Read(DataInputStream rdr, int[] rest) throws IOException {
+        void read(DataInputStream rdr, int[] rest) throws IOException {
             //    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
             // +0 |      S R      |xof| - |sus|ksr|
             // +1 |      R R      |      D R      |
@@ -111,27 +111,27 @@ public class VM35FMVoice implements VM35Voice {
             rdr.readFully(data);
             rest[0] -= data.length;
 
-            this.sr = (data[0] >> 4);
+            this.sr = ((data[0] & 0xff) >>> 4);
             this.xof = (data[0] & 0x08) != 0;
             this.sus = (data[0] & 0x02) != 0;
             this.ksr = (data[0] & 0x01) != 0;
-            this.rr = (data[1] >> 4);
+            this.rr = ((data[1] & 0xff) >>> 4);
             this.dr = (data[1] & 15);
-            this.ar = (data[2] >> 4);
+            this.ar = ((data[2] & 0xff) >>> 4);
             this.sl = (data[2] & 15);
-            this.tl = (data[3] >> 2);
+            this.tl = ((data[3] & 0xff) >>> 2);
             this.ksl = (data[3] & 3);
-            this.dam = (data[4] >> 5 & 3);
+            this.dam = ((data[4] & 0xff) >>> 5 & 3);
             this.eam = (data[4] & 0x10) != 0;
-            this.dvb = (data[4] >> 1 & 3);
+            this.dvb = ((data[4] & 0xff) >>> 1 & 3);
             this.evb = (data[4] & 0x01) != 0;
-            this.multi = Multiplier.values()[data[5] >> 4];
+            this.multi = Multiplier.values()[(data[5] & 0xff) >>> 4];
             this.DT = (data[5] & 7);
-            this.ws = (data[6] >> 3);
+            this.ws = ((data[6] & 0xff) >>> 3);
             this.fb = (data[6] & 7);
         }
 
-        byte[] Bytes(boolean forYMF825) {
+        byte[] getBytes(boolean forYMF825) {
             var sus = this.sus;
             var ws = this.ws & 31;
             if (forYMF825) {
@@ -180,23 +180,25 @@ public class VM35FMVoice implements VM35Voice {
             return "Op #%d: multi=%s DT=%d\n".formatted(this.num + 1, this.multi, this.DT) + indent(s, "\t");
         }
 
-        // Normalize removes outliers from the timbre data and normalizes it.
-        // Returns true if the tone was normal to begin with.
-        boolean Normalize() {
+        /**
+         * Normalize removes outliers from the timbre data and normalizes it.
+         * Returns true if the tone was normal to begin with.
+         */
+        boolean normalize() {
             var ok = new boolean[] {true};
-            VM35Voice.normalizeint(ok, this.multi.ordinal(), 0, 15);
-            VM35Voice.normalizeint(ok, this.DT, 0, 7);
-            VM35Voice.normalizeint(ok, this.ar, 0, 15);
-            VM35Voice.normalizeint(ok, this.dr, 0, 15);
-            VM35Voice.normalizeint(ok, this.sr, 0, 15);
-            VM35Voice.normalizeint(ok, this.rr, 0, 15);
-            VM35Voice.normalizeint(ok, this.sl, 0, 15);
-            VM35Voice.normalizeint(ok, this.tl, 0, 63);
-            VM35Voice.normalizeint(ok, this.ksl, 0, 3);
-            VM35Voice.normalizeint(ok, this.dam, 0, 3);
-            VM35Voice.normalizeint(ok, this.dvb, 0, 3);
-            VM35Voice.normalizeint(ok, this.fb, 0, 7);
-            VM35Voice.normalizeint(ok, this.ws, 0, 31);
+            VM35Voice.normalizeInt(ok, this.multi.ordinal(), 0, 15);
+            VM35Voice.normalizeInt(ok, this.DT, 0, 7);
+            VM35Voice.normalizeInt(ok, this.ar, 0, 15);
+            VM35Voice.normalizeInt(ok, this.dr, 0, 15);
+            VM35Voice.normalizeInt(ok, this.sr, 0, 15);
+            VM35Voice.normalizeInt(ok, this.rr, 0, 15);
+            VM35Voice.normalizeInt(ok, this.sl, 0, 15);
+            VM35Voice.normalizeInt(ok, this.tl, 0, 63);
+            VM35Voice.normalizeInt(ok, this.ksl, 0, 3);
+            VM35Voice.normalizeInt(ok, this.dam, 0, 3);
+            VM35Voice.normalizeInt(ok, this.dvb, 0, 3);
+            VM35Voice.normalizeInt(ok, this.fb, 0, 7);
+            VM35Voice.normalizeInt(ok, this.ws, 0, 31);
             // TODO User waveform warning
             return ok[0];
         }
@@ -205,7 +207,7 @@ public class VM35FMVoice implements VM35Voice {
     private static final Logger logger = getLogger(VM35FMVoice.class.getName());
 
     //`json:"-"`
-    public VM35FMVoiceVersion version;
+    public VM35FMVoiceVersion version = VM35FMVoiceVersion.VM3Lib;
     //`json:"drum_key"`
     public Note drumKey;
     // Panpot (unused in YMF825)
@@ -226,7 +228,7 @@ public class VM35FMVoice implements VM35Voice {
 
     public VM35FMVoice() {}
 
-    VM35FMVoice(byte[] data, VM35FMVoiceVersion version) throws IOException {
+    public VM35FMVoice(byte[] data, VM35FMVoiceVersion version) throws IOException {
         this.version = version;
         var rest = new int[] {data.length};
         var rdr = new DataInputStream(new ByteArrayInputStream(data));
@@ -236,7 +238,7 @@ public class VM35FMVoice implements VM35Voice {
             logger.log(Level.ERROR, "NewVM35FMVoice invalid data: %s (want %d, got %d bytes)".formatted(hex(data), data.length - rest[0], data.length));
         }
         switch (version) {
-            case VM35FMVoiceVersion_VM3Lib, VM35FMVoiceVersion_VM3Exclusive:
+            case VM3Lib, VM3Exclusive:
                 this.readUnusedRest(rdr, rest);
         }
         if (rest[0] != 0) {
@@ -247,7 +249,7 @@ public class VM35FMVoice implements VM35Voice {
     @Override
     public void read(DataInputStream rdr, int[] rest) throws IOException {
         switch (this.version) {
-            case VM35FMVoiceVersion_VM3Exclusive:
+            case VM3Exclusive:
                 //    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
                 // ------------------------------------ Global
                 // +0 |       |PN4|LF1|SR3|RR3|AR3|TL5|  // Bits 0-3 affect the next Op
@@ -314,21 +316,21 @@ public class VM35FMVoice implements VM35Voice {
         var global = new byte[3];
         rdr.readFully(global);
         rest[0] -= global.length;
-        this.drumKey = Note.values()[global[0] & 0xff];
-        this.panpot = Panpot.values()[global[1] >> 3];
+        this.drumKey = new Note(global[0] & 0xff);
+        this.panpot = Panpot.values()[(global[1] & 0xff) >> 3];
         this.bo = BasicOctave.values()[global[1] & 3];
-        this.lfo = global[2] >> 6 & 3;
+        this.lfo = (global[2] & 0xff) >> 6 & 3;
         this.pe = (global[2] & 0x20) != 0;
         this.alg = Algorithm.values()[global[2] & 7];
         this.operators = new ArrayList<>(4);
         var n = this.alg.operatorCount();
         for (var op = 0; op < 4; op++) {
-            this.operators.set(op, new VM35FMOperator());
+            this.operators.add(new VM35FMOperator());
             this.operators.get(op).version = this.version;
             this.operators.get(op).num = op;
         }
         for (var op = 0; op < n; op++) {
-            this.operators.get(op).Read(rdr, rest);
+            this.operators.get(op).read(rdr, rest);
         }
     }
 
@@ -338,7 +340,7 @@ public class VM35FMVoice implements VM35Voice {
         for (var op = n; op < 4; op++) {
             this.operators.set(op, new VM35FMOperator());
             this.operators.get(op).num = op;
-            this.operators.get(op).Read(rdr, rest);
+            this.operators.get(op).read(rdr, rest);
         }
     }
 
@@ -357,7 +359,7 @@ public class VM35FMVoice implements VM35Voice {
             n = this.alg.operatorCount();
         }
         for (var op = 0; op < n; op++) {
-            b.writeBytes(this.operators.get(op).Bytes(forYMF825));
+            b.writeBytes(this.operators.get(op).getBytes(forYMF825));
         }
         return b.toByteArray();
     }
@@ -391,10 +393,10 @@ public class VM35FMVoice implements VM35Voice {
 
     VM35FMVoice demoVM35FMVoice() {
         var v = new VM35FMVoice() {{
-            version = VM35FMVoiceVersion.VM35FMVoiceVersion_VM5;
-            drumKey = Note.values()[Note_A3];
-            panpot = Panpot_Center;
-            bo = BasicOctave_Normal;
+            version = VM35FMVoiceVersion.VM5;
+            drumKey = new Note(Note_A3);
+            panpot = Center;
+            bo = Normal;
             alg = Algorithm.values()[0];
             operators = new ArrayList<>(4);
         }};
@@ -414,14 +416,14 @@ public class VM35FMVoice implements VM35Voice {
     }
 
     // Normalize removes outliers from the timbre data and normalizes it.
-    // Returns true if the tone was normal to begin with.
+    // Returns true if the tone was normal to begin with. */
     boolean /* voice *VM35FMVoice */ normalize() {
         var ok = new boolean[] {true};
-        VM35Voice.normalizeint(ok, this.drumKey.ordinal(), 0, 127);
-        VM35Voice.normalizeint(ok, this.panpot.ordinal(), 0, 31);
-        VM35Voice.normalizeint(ok, this.bo.ordinal(), 0, 3);
-        VM35Voice.normalizeint(ok, this.lfo, 0, 3);
-        VM35Voice.normalizeint(ok, this.alg.operatorCount(), 0, 7);
+        VM35Voice.normalizeInt(ok, this.drumKey.note, 0, 127);
+        VM35Voice.normalizeInt(ok, this.panpot.ordinal(), 0, 31);
+        VM35Voice.normalizeInt(ok, this.bo.ordinal(), 0, 3);
+        VM35Voice.normalizeInt(ok, this.lfo, 0, 3);
+        VM35Voice.normalizeInt(ok, this.alg.operatorCount(), 0, 7);
         var ops = 4;
         if (this.alg.ordinal() < 2) {
             ops = 2;
@@ -441,7 +443,7 @@ public class VM35FMVoice implements VM35Voice {
                 this.operators.set(i, op);
                 ok[0] = false;
             }
-            if (!op.Normalize()) {
+            if (!op.normalize()) {
                 ok[0] = false;
             }
         }

@@ -54,8 +54,10 @@ public class VM35PCMVoice implements VM35Voice {
         return hex(this.rawData);
     }
 
-    // Normalize removes outliers from the timbre data and normalizes it.
-    // Returns true if the tone was normal to begin with.
+    /**
+     * Normalize removes outliers from the timbre data and normalizes it.
+     * Returns true if the tone was normal to begin with.
+     */
     boolean normalize() {
         var ok = true;
         if (this.rawData == null) {

@@ -21,11 +21,11 @@ import vavi.sound.yamaha.smaf.voice.VM5VoiceLib;
 import static vavi.sound.yamaha.ma.cmd.module.Helper.collectInts;
 import static vavi.sound.yamaha.ma.cmd.module.Helper.writeBytes;
 import static vavi.sound.yamaha.ma.cmd.module.Helper.writeInts;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIControlChange;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOff;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOn;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIPitchBend;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIProgramChange;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.ControlChange;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.NoteOff;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.NoteOn;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.PitchBend;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.ProgramChange;
 
 
 public class Main {
@@ -34,16 +34,15 @@ public class Main {
     Chip chip;
     Controller ctrl;
 
-    // FMFMLoadLibrary loads a library.
-    //export FMFMLoadLibrary
-    int FMFMLoadLibrary(String voicePath) throws IOException {
+    /** Loads a library. */
+    int loadLibrary(String voicePath) throws IOException {
         var voicePathGo = Path.of(voicePath);
         try (var s = Files.list(voicePathGo)) {
             AtomicInteger i = new AtomicInteger();
 			s.forEach(p -> {
 				if (!Files.isDirectory(p) && p.getFileName().toString().endsWith(".vm5.pb")) {
                     try {
-                        lib.LoadFile(voicePathGo.resolve(p.getFileName()).toString());
+                        lib.loadFile(voicePathGo.resolve(p.getFileName()).toString());
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
@@ -53,8 +52,8 @@ public class Main {
         return 1;
     }
 
-    // FMFMInit initializes the sound source.
-    int FMFMInit(double sampleRate) {
+    /** Initializes the sound source. */
+    int init(double sampleRate) {
         AtomicInteger result = new AtomicInteger();
         Executors.newSingleThreadExecutor().submit(() -> {
             var chip = new Chip((int) sampleRate, -15.0, -1);
@@ -68,38 +67,38 @@ public class Main {
         return result.get();
     }
 
-    // FMFMFlushMIDIMessages processes accumulated MIDI messages.
-    void FMFMFlushMIDIMessages(long until) {
+    /** Processes accumulated MIDI messages. */
+    void flushMIDIMessages(long until) {
         ctrl.FlushMIDIMessages((int) (until));
     }
 
-    // FMFMNoteOn reproduces the behavior of a sound source when receiving a MIDI note-on.
-    void FMFMNoteOn(long timestamp, long ch, long note, long velocity) {
-        ctrl.PushMIDIMessage(MIDINoteOn, (int) timestamp, (int) ch, (int) note, (int) velocity);
+    /** Reproduces the behavior of a sound source when receiving a MIDI note-on. */
+    void noteOn(long timestamp, long ch, long note, long velocity) {
+        ctrl.pushMIDIMessage(NoteOn, (int) timestamp, (int) ch, (int) note, (int) velocity);
     }
 
-    // FMFMNoteOff reproduces the behavior of a sound source when receiving a MIDI note-off signal.
-    void FMFMNoteOff(long timestamp, long ch, long note) {
-        ctrl.PushMIDIMessage(MIDINoteOff, (int) timestamp, (int) ch, (int) note, 0);
+    /** Reproduces the behavior of a sound source when receiving a MIDI note-off signal. */
+    void noteOff(long timestamp, long ch, long note) {
+        ctrl.pushMIDIMessage(NoteOff, (int) timestamp, (int) ch, (int) note, 0);
     }
 
-    // FMFMControlChange reproduces the behavior of a sound source when receiving a MIDI control change.
-    void FMFMControlChange(long timestamp, long ch, long cc, long value) {
-        ctrl.PushMIDIMessage(MIDIControlChange, (int) timestamp, (int) ch, (int) cc, (int) value);
+    /** Reproduces the behavior of a sound source when receiving a MIDI control change. */
+    void controlChange(long timestamp, long ch, long cc, long value) {
+        ctrl.pushMIDIMessage(ControlChange, (int) timestamp, (int) ch, (int) cc, (int) value);
     }
 
-    // FMFMProgramChange reproduces the behavior of a sound source when receiving a MIDI Program Change.
-    void FMFMProgramChange(long timestamp, long ch, long value) {
-        ctrl.PushMIDIMessage(MIDIProgramChange, (int) timestamp, (int) ch, (int) value, 0);
+    /** Reproduces the behavior of a sound source when receiving a MIDI Program Change. */
+    void programChange(long timestamp, long ch, long value) {
+        ctrl.pushMIDIMessage(ProgramChange, (int) timestamp, (int) ch, (int) value, 0);
     }
 
-    // FMFMPitchBend reproduces the behavior of a sound source when receiving MIDI pitch bend.
-    void FMFMPitchBend(long timestamp, long ch, long l, long h) {
-        ctrl.PushMIDIMessage(MIDIPitchBend, (int) timestamp, (int) ch, (int) l, (int) h);
+    /** Reproduces the behavior of a sound source when receiving MIDI pitch bend. */
+    void pitchBend(long timestamp, long ch, long l, long h) {
+        ctrl.pushMIDIMessage(PitchBend, (int) timestamp, (int) ch, (int) l, (int) h);
     }
 
-    // FMFMListBankMSB returns a list of selectable MSBs for the registered tones.
-    public long FMFMListBankMSB(long[] out) {
+    /** Returns a list of selectable MSBs for the registered tones. */
+    public long listBankMSB(long[] out) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
             for (var p : lib.programs) {
@@ -109,8 +108,8 @@ public class Main {
         }));
     }
 
-    // FMFMListBankLSB returns a list of selectable LSBs for the registered tones.
-    public long FMFMListBankLSB(long[] out, long msb) {
+    /** Returns a list of selectable LSBs for the registered tones. */
+    public long listBankLSB(long[] out, long msb) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
             for (var p : lib.programs) {
@@ -122,8 +121,8 @@ public class Main {
         }));
     }
 
-    // FMFMListPC returns a list of selectable program changes for the registered tones.
-    long FMFMListPC(long[] out, long msb, long lsb) {
+    /** Returns a list of selectable program changes for the registered tones. */
+    long listPC(long[] out, long msb, long lsb) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
             for (var p : lib.programs) {
@@ -135,21 +134,21 @@ public class Main {
         }));
     }
 
-    // FMFMListDrumNote returns a list of selectable drum notes for the registered sounds.
-    long FMFMListDrumNote(long[] out, long msb, long lsb, long pc) {
+    /** Returns a list of selectable drum notes for the registered sounds. */
+    long listDrumNote(long[] out, long msb, long lsb, long pc) {
         return writeInts(out, collectInts(() -> {
             var ch = new ArrayList<Integer>();
             for (var p : lib.programs) {
                 if (p.bankMSB == msb && p.bankLSB == lsb && p.pc == pc) {
-                    ch.add(p.drumNote.ordinal());
+                    ch.add(p.drumNote.note);
                 }
             }
             return ch;
         }));
     }
 
-    // FMFMGetVoice returns voice data encoded in Protocol Buffers format.
-    long FMFMGetVoice(byte[] out, long msb, long lsb, long pc, long drumNote) {
+    /** Returns voice data encoded in Protocol Buffers format. */
+    long getVoice(byte[] out, long msb, long lsb, long pc, long drumNote) {
         // TODO: implement
         for (var p : lib.programs) {
             var ch = new ArrayList<Integer>();
@@ -161,8 +160,8 @@ public class Main {
         return 0;
     }
 
-    // FMFMNext generates and retrieves the next sample.
-    double[] FMFMNext() {
+    /** Generates and retrieves the next sample. */
+    double[] next() {
         return chip.next();
     }
 }

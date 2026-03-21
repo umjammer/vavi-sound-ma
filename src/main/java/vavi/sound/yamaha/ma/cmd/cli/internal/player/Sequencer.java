@@ -21,11 +21,11 @@ import vavi.sound.yamaha.ma.fmfm.Controller.ControllerOpts;
 import vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage;
 
 import static java.lang.System.getLogger;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIControlChange;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOff;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDINoteOn;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIPitchBend;
-import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.MIDIProgramChange;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.ControlChange;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.NoteOff;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.NoteOn;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.PitchBend;
+import static vavi.sound.yamaha.ma.fmfm.Controller.MIDIMessage.ProgramChange;
 
 
 public class Sequencer implements AutoCloseable {
@@ -106,17 +106,17 @@ logger.log(Level.ERROR, e.getMessage(), e);
                 MIDIMessage typ = null;
                 switch (status & 0xf0) {
                     case 0x90:
-                        typ = MIDINoteOn;
+                        typ = NoteOn;
                     case 0x80:
-                        typ = MIDINoteOff;
+                        typ = NoteOff;
                     case 0xb0:
-                        typ = MIDIControlChange;
+                        typ = ControlChange;
                     case 0xc0:
-                        typ = MIDIProgramChange;
+                        typ = ProgramChange;
                     case 0xe0:
-                        typ = MIDIPitchBend;
+                        typ = PitchBend;
                 }
-                seq.fmfm.PushMIDIMessage(typ, (int) (e.getTick()), channel, msg.getMessage()[0], msg.getMessage()[1]);
+                seq.fmfm.pushMIDIMessage(typ, (int) (e.getTick()), channel, msg.getMessage()[0], msg.getMessage()[1]);
             }
         });
     }
@@ -127,7 +127,7 @@ logger.log(Level.ERROR, e.getMessage(), e);
     }
 
     // ListMIDIDevices gets a list of MIDI devices that can be selected as input.
-    String[] ListMIDIDeivces() throws MidiUnavailableException {
+    String[] listMIDIDeivces() throws MidiUnavailableException {
         List<String> result = new ArrayList<>();
         Info[] infos = MidiSystem.getMidiDeviceInfo();
         for (Info info : infos) {

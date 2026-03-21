@@ -13,16 +13,10 @@ public class Enums {
 
     public enum VoiceType {
 
-        VoiceType_FM("FM"),
-        VoiceType_PCM("PCM"),
-        VoiceType_AL("AL");
+        FM,
+        PCM,
+        AL;
         // "unknown"
-
-        final String t;
-
-        VoiceType(String t) {
-            this.t = t;
-        }
 
         public String toString() {
             return "%s(%d)".formatted(name(), ordinal());
@@ -50,7 +44,7 @@ public class Enums {
         }
 
         public String toString() {
-            return "%s[ %s ]".formatted(this, s);
+            return "%s[ %s ]".formatted(name(), s);
         }
 
         public int operatorCount() {
@@ -63,58 +57,58 @@ public class Enums {
     }
 
     public enum BasicOctave {
-        BasicOctave_Normal(1),
-        BasicOctave0(0),
-        BasicOctaveMinus1(-1),
-        BasicOctaveMinus2(-2);
+        Normal(1),
+        Zero(0),
+        Minus1(-1),
+        Minus2(-2);
         // "undefined"
         final int v;
         BasicOctave(int v) { this.v = v; }
 
         Note diffNote(BasicOctave o) {
             return switch (o.v) {
-                case 0 -> Note.values()[1 * 12];
-                case 2 -> Note.values()[-1 * 12];
-                case 3 -> Note.values()[-2 * 12];
-                default -> Note.values()[0 * 12];
+                case 0 -> new Note(1 * 12);
+                case 2 -> new Note(-1 * 12);
+                case 3 -> new Note(-2 * 12);
+                default -> new Note(0 * 12);
             };
         }
     }
 
     public enum Panpot {
-        Panpot0,
-        Panpot1,
-        Panpot2,
-        Panpot3,
-        Panpot4,
-        Panpot5,
-        Panpot6,
-        Panpot7,
-        Panpot8,
-        Panpot9,
-        Panpot10,
-        Panpot11,
-        Panpot12,
-        Panpot13,
-        Panpot14,
-        Panpot_Center,
-        Panpot15,
-        Panpot16,
-        Panpot17,
-        Panpot18,
-        Panpot19,
-        Panpot20,
-        Panpot21,
-        Panpot22,
-        Panpot23,
-        Panpot24,
-        Panpot25,
-        Panpot26,
-        Panpot27,
-        Panpot28,
-        Panpot29,
-        Panpot30,
-        Panpot31;
+        _0,
+        _1,
+        _2,
+        _3,
+        _4,
+        _5,
+        _6,
+        _7,
+        _8,
+        _9,
+        _10,
+        _11,
+        _12,
+        _13,
+        _14,
+        Center,
+        _15,
+        _16,
+        _17,
+        _18,
+        _19,
+        _20,
+        _21,
+        _22,
+        _23,
+        _24,
+        _25,
+        _26,
+        _27,
+        _28,
+        _29,
+        _30,
+        _31;
 
         @Override public String toString() {
             var v = ordinal();
@@ -131,22 +125,22 @@ public class Enums {
     }
 
     public enum Multiplier {
-        Multiplier0,
-        Multiplier1,
-        Multiplier2,
-        Multiplier3,
-        Multiplier4,
-        Multiplier5,
-        Multiplier6,
-        Multiplier7,
-        Multiplier8,
-        Multiplier9,
-        Multiplier10,
-        Multiplier11,
-        Multiplier12,
-        Multiplier13,
-        Multiplier14,
-        Multiplier15;
+        _0,
+        _1,
+        _2,
+        _3,
+        _4,
+        _5,
+        _6,
+        _7,
+        _8,
+        _9,
+        _10,
+        _11,
+        _12,
+        _13,
+        _14,
+        _15;
 
         @Override public String toString() {
             if (ordinal() == 0) {

@@ -19,9 +19,9 @@ import java.io.IOException;
 public interface VM35Voice {
 
     enum VM35FMVoiceVersion {
-        VM35FMVoiceVersion_VM3Lib,
-        VM35FMVoiceVersion_VM3Exclusive,
-        VM35FMVoiceVersion_VM5,
+        VM3Lib,
+        VM3Exclusive,
+        VM5,
     }
 
     //fmt.Stringer
@@ -30,7 +30,7 @@ public interface VM35Voice {
 
     void readUnusedRest(DataInputStream rdr, int[] rest) throws IOException;
 
-    static int normalizeint(boolean[] ok, int target, int min, int max) {
+    static int normalizeInt(boolean[] ok, int target, int min, int max) {
         int result = target;
         if (target < min) {
             result = min;

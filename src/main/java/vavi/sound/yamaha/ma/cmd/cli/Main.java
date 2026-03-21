@@ -95,7 +95,7 @@ public class Main {
                     return;
                 }
                 try {
-                    lib.set(new VM5VoiceLib(Path.of("voice/").resolve(i.getFileName()).toString()));
+                    lib.set(new VM5VoiceLib(Files.newInputStream(Path.of("voice/").resolve(i.getFileName()))));
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -108,8 +108,8 @@ public class Main {
 
             var renderer = new Renderer();
             var limiter = new Limiter(renderer.Parameters.getSampleRate());
-            limiter.SetThreshold(this.limiter);
-            renderer.Insert(limiter);
+            limiter.setThreshold(this.limiter);
+            renderer.insert(limiter);
             var chip = new Chip((int) renderer.Parameters.getSampleRate(),
                     level,
                     dumpMIDIChannel
@@ -138,7 +138,7 @@ public class Main {
             }
             Controller controller = new Controller();
             try (var seq = new Sequencer(midiDevice, opts)) {
-                renderer.Start(chip::next, controller::FlushMIDIMessages);
+                renderer.start(chip::next, controller::FlushMIDIMessages);
                 Thread.sleep(24 * 60 * 60 * 1000);
             }
         } catch (Exception e) {

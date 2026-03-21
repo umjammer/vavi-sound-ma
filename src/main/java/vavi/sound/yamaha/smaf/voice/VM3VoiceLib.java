@@ -6,6 +6,7 @@ package vavi.sound.yamaha.smaf.voice;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.nio.file.Files;
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.System.getLogger;
-import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM35FMVoiceVersion_VM3Lib;
+import static vavi.sound.yamaha.smaf.voice.VM35Voice.VM35FMVoiceVersion.VM3Lib;
 
 
 /**
@@ -24,12 +25,12 @@ public class VM3VoiceLib implements VoiceLib {
 
     private static final Logger logger = getLogger(VM3VoiceLib.class.getName());
 
-    List<VM35VoicePC> programs = new ArrayList<>(); // `json:"programs"`
+    public List<VM35VoicePC> programs = new ArrayList<>(); // `json:"programs"`
 
     void read(DataInputStream rdr, int[] rest) throws IOException {
         for (var pc = 0; pc < 128 && 0 < rest[0]; pc++) {
             var voice = new VM35VoicePC() {{
-                version = VM35FMVoiceVersion_VM3Lib;
+                version = VM3Lib;
             }};
             voice.read(rdr, rest);
             this.programs.add(voice);
@@ -41,8 +42,8 @@ public class VM3VoiceLib implements VoiceLib {
         return String.join("\n", this.programs.stream().map(VM35VoicePC::toString).toArray(String[]::new));
     }
 
-    VM3VoiceLib(String file) throws IOException {
-        try (DataInputStream fh = new DataInputStream(Files.newInputStream(Path.of(file)))) {
+    public VM3VoiceLib(InputStream is) throws IOException {
+        try (DataInputStream fh = new DataInputStream(is)) {
             ChunkHeader hdr = new ChunkHeader();
             hdr.read(fh);
             if (hdr.signature != ('F' << 24 | 'M' << 16 | 'M' << 8 | '3')) {

@@ -13,11 +13,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
 
+import vavi.sound.yamaha.smaf.pb.smaf.Smaf.VM5VoiceLib;
+import vavi.util.Debug;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import vavi.sound.yamaha.smaf.pb.smaf.Smaf.VM5VoiceLib;
-import vavi.util.Debug;
 
 
 /**

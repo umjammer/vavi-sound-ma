@@ -8,7 +8,7 @@ package vavi.sound.yamaha.ma.cmd.cli.internal.player;
 interface Insertion {
 
     // Next generates the next sample and returns its amplitude to the left and right.
-    double[] Next(double l, double r);
+    double[] next(double l, double r);
 }
 
 // Limiter is an insertion effect called a "limiter."
@@ -27,18 +27,18 @@ public class Limiter implements Insertion {
     // NewLimiter creates a new Limiter.
     public Limiter(double sampleRate) {
         this.sampleRate = sampleRate;
-        this.SetThreshold(-3.0).SetLookAhead(.005).SetAttack(.005).SetRelease(.02);
+        this.setThreshold(-3.0).setLookAhead(.005).setAttack(.005).setRelease(.02);
     }
 
     // SetThreshold sets the threshold level [dB].
-    public Limiter SetThreshold(double v) {
+    public Limiter setThreshold(double v) {
         this.threshold = Math.pow(10, v / 20.0);
         this.thresholdDB = v;
         return this;
     }
 
     // SetLookAhead sets the look ahead time [seconds].
-    Limiter SetLookAhead(double v) {
+    Limiter setLookAhead(double v) {
         var n = (int) (Math.ceil(this.sampleRate * v));
         this.buffer = new double[n][2];
         this.bufferPos = 0;
@@ -46,14 +46,14 @@ public class Limiter implements Insertion {
     }
 
     // SetAttack sets the attack time.
-    Limiter SetAttack(double sec) {
+    Limiter setAttack(double sec) {
         this.attack = this.timeToMultiplier(sec);
         this.attackInv = 1.0 - this.attack;
         return this;
     }
 
     // SetRelease sets the release time.
-    Limiter SetRelease(double sec) {
+    Limiter setRelease(double sec) {
         this.release = this.timeToMultiplier(sec);
         return this;
     }
@@ -66,7 +66,7 @@ public class Limiter implements Insertion {
 
     // Next generates the next sample and returns its amplitude to the left and right.
     @Override
-    public double[] Next(double l, double r) {
+    public double[] next(double l, double r) {
         this.buffer[this.bufferPos][0] = l;
         this.buffer[this.bufferPos][1] = r;
         this.bufferPos = (this.bufferPos + 1) % this.buffer.length;
