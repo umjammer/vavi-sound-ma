@@ -1,19 +1,17 @@
 [![Release](https://jitpack.io/v/umjammer/vavi-sound-ma.svg)](https://jitpack.io/#umjammer/vavi-sound-ma)
 [![Java CI](https://github.com/umjammer/vavi-sound-ma/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/vavi-sound-ma/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/vavi-sound-ma/actions/workflows/codeql.yml/badge.svg)](https://github.com/umjammer/vavi-sound-ma/actions/workflows/codeql.yml)
-![Java](https://img.shields.io/badge/Java-17-b07219)
+![Java](https://img.shields.io/badge/Java-25-b07219)
 
 # vavi-sound-ma
 
-**WORK IN PROGRESS**
+a YAMAHA MA-5 (YMU765) / YMF825 FM synthesizer sound voice patch loader.
 
-**fmFM** (Fake Mobile FM synth) is a YAMAHA MA-5 (YMU765) / YMF825 clone software FM synthesizer.
-
-this is a fork of [fmfm.core](https://github.com/but80/fmfm.core).
+this project is based on [fmfm.core](https://github.com/but80/fmfm.core).
 
 ### sample of
 
- * ~~protbuf, maven plugin~~
+ * protobuf, maven plugin
  * jazzer junit5
 
 ## Install
@@ -34,6 +32,9 @@ this is a fork of [fmfm.core](https://github.com/but80/fmfm.core).
   * https://github.com/jcrona/rovio-fw (ma series controller side)
   * https://github.com/tillt/retrocode (smaf)
   * https://moddingwiki.shikadi.net/wiki/IBK_Format
+  * http://khhl0fx.web.fc2.com/melo/neiro.html 🇯🇵
+  * https://lpcwiki.miraheze.org/wiki/Yamaha_SMAF/MA-5
+  * https://keim.hatenablog.com/entry/20080827/p1 🇯🇵
 
 * ProtoBuffer
   * https://github.com/protostuff/protostuff
@@ -49,4 +50,6 @@ this is a fork of [fmfm.core](https://github.com/but80/fmfm.core).
   - MIDI vibrato resolution
   - Channel pan resolution
   - Channel pan and voice pan blending
-- soundfont reader 
+- extract soundfont reader .vm3 .vm5 ... `vavi.sound.yamaha.smaf.voice`
+  - DefMA3_16.vm3
+- protobuf is not needed (it makes things difficult for this project)

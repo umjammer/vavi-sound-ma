@@ -89,7 +89,17 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.12.1</version>
         <configuration>
-          <release>17</release>
+          <source>25</source> <!-- TODO release causes compilation failure why? -->
+          <target>25</target>
+          <compilerArgs>
+            <arg>--add-exports</arg>
+            <arg>java.desktop/com.sun.media.sound=ALL-UNNAMED</arg>
+            <arg>--add-exports</arg>
+            <arg>java.base/sun.nio.ch=ALL-UNNAMED</arg>
+          </compilerArgs>
+          <!-- https://stackoverflow.com/a/30472473 -->
+          <fork>true</fork>
+          <showWarnings>true</showWarnings>
         </configuration>
       </plugin>
       <plugin>
@@ -118,7 +128,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>6.0.2</version>
+        <version>6.0.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -129,7 +139,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
       <artifactId>vavi-sound</artifactId>
-      <version>1.0.22</version>
+      <version>1.0.24</version>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId>
@@ -150,7 +160,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- vavi / com.github.umjammer -->
       <artifactId>vavi-util-serdes</artifactId>
-      <version>1.0.11</version>
+      <version>1.0.13</version>
     </dependency>
 
     <dependency>
