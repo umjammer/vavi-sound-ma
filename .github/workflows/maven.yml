@@ -29,4 +29,4 @@ jobs:
       - name: Build with Maven
         run: |
             brew install protobuf
-            mvn -B -P protobuf package --file pom.xml
+            mvn -B -P protobuf package --file pom.xml -Dprotoc=/opt/homebrew/bin/protoc
