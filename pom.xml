@@ -5,6 +5,8 @@
   <artifactId>vavi-sound-ma</artifactId>
   <version>0.0.1</version>
 
+  <url>https://github.com/umjammer/vavi-sound-ma</url>
+
   <profiles>
     <profile>
       <id>local</id>
@@ -123,9 +125,9 @@
                   <target>
                     <mkdir dir="${project.build.directory}/generated-sources" />
                     <get src="${project.url}/releases/download/${project.version}/generated-sources.zip"
-                         dest="${project.build.directory}/generated-sources.jar"
+                         dest="${project.build.directory}/generated-sources.zip"
                          usetimestamp="true"/>
-                    <unzip src="${project.build.directory}/generated-sources.jar"
+                    <unzip src="${project.build.directory}/generated-sources.zip"
                            dest="${project.build.directory}/generated-sources" />
                   </target>
                   <failOnError>true</failOnError>
