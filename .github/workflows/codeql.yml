@@ -68,7 +68,7 @@ jobs:
 
     - name: Build with Maven
       run: |
-        arch -arm6 brew install protobuf
+        arch -arm64 brew install protobuf
         mvn -B -P protobuf package --file pom.xml -Dmaven.test.skip=true -Dprotoc=/opt/homebrew/bin/protoc
 
     - name: Perform CodeQL Analysis
