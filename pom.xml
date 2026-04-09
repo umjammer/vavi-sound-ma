@@ -62,6 +62,84 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>local (not on jitpack)</id>
+      <activation>
+        <os>
+          <family>mac</family>
+          <arch>aarch64</arch>
+        </os>
+        <property>
+          <name>env.JITPACK</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>generated-sources-jar</id>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <zip destfile="${project.build.directory}/generated-sources.zip"
+                         basedir="${project.build.directory}/generated-sources"
+                         includes="protobuf/**" />
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>on jitpack</id>
+      <activation>
+        <property>
+          <name>env.JITPACK</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <executions>
+              <execution>
+                <id>assets-download</id>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-sources" />
+                    <get src="${project.url}/releases/download/${project.version}/generated-sources.zip"
+                         dest="${project.build.directory}/generated-sources.jar"
+                         usetimestamp="true"/>
+                    <unzip src="${project.build.directory}/generated-sources.jar"
+                           dest="${project.build.directory}/generated-sources" />
+                  </target>
+                  <failOnError>true</failOnError>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
   </profiles>
 
   <build>
