@@ -114,7 +114,7 @@ public class Controller {
         }
     }
 
-    static class midiMessage {
+    static class MidiMessage_ {
 
         MIDIMessage typ;
         int timestamp;
@@ -205,7 +205,7 @@ public class Controller {
     boolean debugPrintStatus;
     Map<Integer, Object> ignoreMIDIChannels = new HashMap<>();
     int soloMIDIChannel;
-    List<midiMessage> midiMessages;
+    List<MidiMessage_> midiMessages;
 
     midiChannelState[] midiChannelStates = new midiChannelState[16];
     chipChannelState[] chipChannelStates = new chipChannelState[ChannelCount];
@@ -236,7 +236,7 @@ public class Controller {
     /** Adds a MIDI message for processing. */
     public synchronized void pushMIDIMessage(MIDIMessage typ, int timestamp, int midich, int data1, int data2) {
 
-        var msg = new midiMessage() {{
+        var msg = new MidiMessage_() {{
             this.typ = typ;
             this.timestamp = timestamp;
             this.midiChannel = midich;
@@ -264,7 +264,7 @@ public class Controller {
     /** Processes any accumulated MIDI messages. */
     public synchronized void FlushMIDIMessages(int until) {
 
-        List<midiMessage> rest = List.of();
+        List<MidiMessage_> rest = List.of();
         for (var i = 0; i < this.midiMessages.size(); i++) {
             var msg = this.midiMessages.get(i);
             if (until < msg.timestamp) {
