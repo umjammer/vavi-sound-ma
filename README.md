@@ -20,6 +20,10 @@ this project is based on [fmfm.core](https://github.com/but80/fmfm.core).
 
 ## Usage
 
+### user
+
+- [vavi-apps-mfiplayer](https://github.com/umjammer/vavi-apps-mfiplayer)
+
 ## References
 
 * Yamaha
