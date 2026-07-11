@@ -215,7 +215,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer / vavi -->
       <artifactId>vavi-sound</artifactId>
-      <version>1.0.24</version>
+      <version>1.0.26</version>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId>
