@@ -44,7 +44,7 @@ public class VMAVoicePC {
         }
     }
 
-    void read(DataInputStream rdr, int[] rest) throws IOException {
+    public void read(DataInputStream rdr, int[] rest) throws IOException {
         var data = new VMAVoicePCHeaderRawData();
         data.read(rdr);
         rest[0] -= 3 /* sizeof(data) */;
@@ -68,7 +68,7 @@ public class VMAVoicePC {
         return s + indent(this.voice.toString(), "\t");
     }
 
-    VM35VoicePC toVM35() {
+    public VM35VoicePC toVM35() {
         return new VM35VoicePC() {{
             name = this.name;
             flag = 0x24;
@@ -86,7 +86,7 @@ public class VMAVoicePC {
      * Normalize removes outliers from the timbre data and normalizes it.
      * Returns true if the tone was normal to begin with.
      */
-    boolean normalize() {
+    public boolean normalize() {
         var ok = new boolean[] {true};
 
         VM35VoicePC voice = this.toVM35();

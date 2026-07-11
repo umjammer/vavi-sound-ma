@@ -145,7 +145,7 @@ public class VMAFMVoice implements VM35Voice {
             return "Op #%d: mult=%s\n".formatted(this.num + 1, this.mult) + indent(s, "\t");
         }
 
-        VM35FMOperator ToVM35(int fb_) {
+        public VM35FMOperator ToVM35(int fb_) {
             var sr_ = this.egt ? 0 : this.rr;
             return new VM35FMOperator() {{
                 num = VMAFMOperator.this.num;
@@ -227,7 +227,7 @@ public class VMAFMVoice implements VM35Voice {
         }
     }
 
-    byte[] toBytes(boolean staticLen) {
+    public byte[] toBytes(boolean staticLen) {
         var b = new ByteArrayOutputStream();
         b.write(((this.lfo & 3) << 6) | ((this.fb & 7) << 3) | (this.alg.ordinal() & 7));
         b.write(1);
@@ -249,7 +249,7 @@ public class VMAFMVoice implements VM35Voice {
 
     private static Gson gson = new Gson().newBuilder().create();
 
-    byte[] marshalJSON() throws IOException {
+    public byte[] marshalJSON() throws IOException {
         return gson.toJson(new VMAFMVoiceMarshaller() {{
             YMF825Data = bytesToInts(ToVM35().toBytes(true, true));
         }}).getBytes();
@@ -266,7 +266,7 @@ public class VMAFMVoice implements VM35Voice {
         return String.join("\n", s);
     }
 
-    VM35FMVoice ToVM35() {
+    public VM35FMVoice ToVM35() {
         var result = new VM35FMVoice() {{
             drumKey = new Note(0);
             panpot = Panpot.Center;

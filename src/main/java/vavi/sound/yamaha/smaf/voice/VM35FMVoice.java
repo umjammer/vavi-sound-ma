@@ -97,7 +97,7 @@ public class VM35FMVoice implements VM35Voice {
         //`json:"evb"`
         public boolean evb;
 
-        void read(DataInputStream rdr, int[] rest) throws IOException {
+        public void read(DataInputStream rdr, int[] rest) throws IOException {
             //    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
             // +0 |      S R      |xof| - |sus|ksr|
             // +1 |      R R      |      D R      |
@@ -131,7 +131,7 @@ public class VM35FMVoice implements VM35Voice {
             this.fb = (data[6] & 7);
         }
 
-        byte[] getBytes(boolean forYMF825) {
+        public byte[] getBytes(boolean forYMF825) {
             var sus = this.sus;
             var ws = this.ws & 31;
             if (forYMF825) {
@@ -184,7 +184,7 @@ public class VM35FMVoice implements VM35Voice {
          * Normalize removes outliers from the timbre data and normalizes it.
          * Returns true if the tone was normal to begin with.
          */
-        boolean normalize() {
+        public boolean normalize() {
             var ok = new boolean[] {true};
             VM35Voice.normalizeInt(ok, this.multi.ordinal(), 0, 15);
             VM35Voice.normalizeInt(ok, this.DT, 0, 7);
@@ -344,7 +344,7 @@ public class VM35FMVoice implements VM35Voice {
         }
     }
 
-    byte[] toBytes(boolean staticLen, boolean forYMF825) {
+    public byte[] toBytes(boolean staticLen, boolean forYMF825) {
         var pan = this.panpot;
         var pe = this.pe;
         if (forYMF825) {
@@ -371,7 +371,7 @@ public class VM35FMVoice implements VM35Voice {
 
     private static Gson gson = new Gson().newBuilder().create();
 
-    byte[] marshalJSON() {
+    public byte[] marshalJSON() {
         return gson.toJson(new VM35FMVoiceMarshaler() {{
             YMF825Data = bytesToInts(toBytes(true, true));
         }}).getBytes();
@@ -391,7 +391,7 @@ public class VM35FMVoice implements VM35Voice {
         return String.join("\n", s);
     }
 
-    VM35FMVoice demoVM35FMVoice() {
+    public VM35FMVoice demoVM35FMVoice() {
         var v = new VM35FMVoice() {{
             version = VM35FMVoiceVersion.VM5;
             drumKey = new Note(Note_A3);
@@ -417,7 +417,7 @@ public class VM35FMVoice implements VM35Voice {
 
     // Normalize removes outliers from the timbre data and normalizes it.
     // Returns true if the tone was normal to begin with. */
-    boolean /* voice *VM35FMVoice */ normalize() {
+    public boolean /* voice *VM35FMVoice */ normalize() {
         var ok = new boolean[] {true};
         VM35Voice.normalizeInt(ok, this.drumKey.note, 0, 127);
         VM35Voice.normalizeInt(ok, this.panpot.ordinal(), 0, 31);

@@ -28,7 +28,7 @@ public class VMAVoiceLib implements VoiceLib {
     //`json:"programs"`
     public List<VMAVoicePC> programs = new ArrayList<>();
 
-    void read(DataInputStream rdr, int[] rest) throws IOException {
+    public void read(DataInputStream rdr, int[] rest) throws IOException {
         for (var pc = 0; pc < 128 && 0 < rest[0]; pc++) {
             var voice = new VMAVoicePC();
             var name = new byte[16];

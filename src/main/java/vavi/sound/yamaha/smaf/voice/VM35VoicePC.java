@@ -78,7 +78,7 @@ public class VM35VoicePC {
         }
     }
 
-    void read(DataInputStream rdr, int[] rest) throws IOException {
+    public void read(DataInputStream rdr, int[] rest) throws IOException {
         switch (this.version) {
             case VM5 -> {
                 VM5VoicePCHeaderRawData data = new VM5VoicePCHeaderRawData();
@@ -146,7 +146,7 @@ public class VM35VoicePC {
      * Normalize removes outliers from the timbre data and normalizes it.
      * Returns true if the tone was normal to begin with.
      */
-    boolean normalize() {
+    public boolean normalize() {
         var ok = new boolean[] {true};
 
         if (VM35FMVoiceVersion.values().length < this.version.ordinal()) {
