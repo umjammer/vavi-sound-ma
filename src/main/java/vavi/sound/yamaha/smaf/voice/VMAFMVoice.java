@@ -183,6 +183,7 @@ public class VMAFMVoice implements VM35Voice {
     public VMAFMVoice(byte[] data) throws IOException {
         int[] rest = new int[] {data.length};
         var rdr = new DataInputStream(new ByteArrayInputStream(data));
+        this.read(rdr, rest); // without this "alg" and "operators" are still null
         if (0 < rest[0]) {
             this.readUnusedRest(rdr, rest);
         }
@@ -278,7 +279,9 @@ public class VMAFMVoice implements VM35Voice {
         }};
         var fb = this.fb;
         for (var op = 0; op < 4; op++) {
-            result.operators.set(op, this.operators[op].ToVM35(fb));
+            // add, not set: "new ArrayList<>(4)" is a capacity of 4, not a size of
+            // 4, so the list is still empty here (go's "make([]T, 4)" is not)
+            result.operators.add(this.operators[op].ToVM35(fb));
             fb = 0;
         }
         return result;
